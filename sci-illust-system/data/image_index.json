@@ -1,0 +1,47 @@
+{
+  "cell_structure": {
+    "path": "examples/images/cell.svg",
+    "concepts": [
+      "细胞膜",
+      "细胞核",
+      "线粒体",
+      "内质网",
+      "高尔基体",
+      "核糖体",
+      "溶酶体"
+    ],
+    "description": "真核细胞结构示意图"
+  },
+  "dna_helix": {
+    "path": "examples/images/dna.svg",
+    "concepts": [
+      "DNA",
+      "DNA双螺旋",
+      "RNA",
+      "转录"
+    ],
+    "description": "DNA双螺旋与转录过程"
+  },
+  "signaling": {
+    "path": "examples/images/signaling.svg",
+    "concepts": [
+      "配体",
+      "受体",
+      "激酶",
+      "信号分子",
+      "细胞核"
+    ],
+    "description": "细胞信号通路示意图"
+  },
+  "nanomedicine": {
+    "path": "examples/images/nano.svg",
+    "concepts": [
+      "纳米颗粒",
+      "药物",
+      "癌细胞",
+      "受体",
+      "内吞"
+    ],
+    "description": "纳米药物靶向递送"
+  }
+}

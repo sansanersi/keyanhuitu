@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <rect x="0" y="0" width="1000" height="700" fill="#FAFBFC" rx="8"/>
+  <text x="500.0" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#333">科研配图 — Scene Composer</text>
+  <line x1="110" y1="150" x2="430" y2="430" stroke="#999" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="430,430 421.3453680108709,427.7422699158794 426.6134048738191,421.7216563582244" fill="#999"/>
+  <text x="270" y="285" text-anchor="middle" font-size="11" fill="#666">合成</text>
+  <line x1="430" y1="430" x2="430" y2="290" stroke="#999" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="430,290 434.0,298.0 426.0,298.0" fill="#999"/>
+  <text x="430" y="355" text-anchor="middle" font-size="11" fill="#666">翻译</text>
+  <line x1="430" y1="430" x2="110" y2="150" stroke="#999" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="110,150 118.6546319891291,152.25773008412065 113.38659512618095,158.27834364177565" fill="#999"/>
+  <text x="270" y="285" text-anchor="middle" font-size="11" fill="#666">合成</text>
+  <line x1="430" y1="430" x2="590" y2="430" stroke="#999" stroke-width="2" stroke-dasharray="5,3"/>
+  <polygon points="590,430 582.0,434.0 582.0,426.0" fill="#999"/>
+  <text x="510" y="425" text-anchor="middle" font-size="11" fill="#666">包装</text>
+  <g transform="translate(80,120)"><circle id="核糖体" cx="30.0" cy="30.0" r="27.0" fill="#3498DB30" stroke="#333" stroke-width="1.5"/></g>
+  <text x="110" y="200" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">核糖体</text>
+  <g transform="translate(400,400)"><g id="蛋白质"><line x1="30.0" y1="60" x2="30.0" y2="30.0" stroke="#E74C3C" stroke-width="3"/><line x1="30.0" y1="30.0" x2="15.0" y2="15.0" stroke="#E74C3C" stroke-width="3"/><line x1="30.0" y1="30.0" x2="45.0" y2="15.0" stroke="#E74C3C" stroke-width="3"/></g></g>
+  <text x="430" y="480" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">蛋白质</text>
+  <g transform="translate(400,260)"><circle id="RNA" cx="30.0" cy="30.0" r="27.0" fill="#2ECC7130" stroke="#333" stroke-width="1.5"/></g>
+  <text x="430" y="340" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">RNA</text>
+  <g transform="translate(560,400)"><circle id="高尔基体" cx="30.0" cy="30.0" r="27.0" fill="#F39C1230" stroke="#333" stroke-width="1.5"/></g>
+  <text x="590" y="480" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">高尔基体</text>
+  <g transform="translate(720,400)"><circle id="翻译" cx="30.0" cy="30.0" r="27.0" fill="#9B59B630" stroke="#333" stroke-width="1.5"/></g>
+  <text x="750" y="480" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">翻译</text>
+  <g transform="translate(880,400)"><circle id="转录" cx="30.0" cy="30.0" r="27.0" fill="#1ABC9C30" stroke="#333" stroke-width="1.5"/></g>
+  <text x="910" y="480" text-anchor="middle" font-size="12" fill="#333" font-weight="bold">转录</text>
+</svg>

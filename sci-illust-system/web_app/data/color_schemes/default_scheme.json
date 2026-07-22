@@ -1,0 +1,58 @@
+{
+  "schemes": {
+    "domain_defaults": {
+      "biology": {
+        "color_palette": [
+          "#3498DB",
+          "#E74C3C",
+          "#2ECC71",
+          "#F39C12",
+          "#9B59B6",
+          "#1ABC9C"
+        ],
+        "background": "#FFFFFF",
+        "stroke_color": "#333333",
+        "stroke_width": 1.5
+      },
+      "chemistry": {
+        "color_palette": [
+          "#E74C3C",
+          "#3498DB",
+          "#27AE60",
+          "#F39C12",
+          "#8E44AD",
+          "#95A5A6"
+        ],
+        "background": "#FFFFFF",
+        "stroke_color": "#2C3E50",
+        "stroke_width": 1.0
+      },
+      "materials": {
+        "color_palette": [
+          "#3498DB",
+          "#E74C3C",
+          "#2ECC71",
+          "#F39C12",
+          "#9B59B6",
+          "#7F8C8D"
+        ],
+        "background": "#FFFFFF",
+        "stroke_color": "#2C3E50",
+        "stroke_width": 1.2
+      },
+      "environment": {
+        "color_palette": [
+          "#27AE60",
+          "#3498DB",
+          "#E67E22",
+          "#8B4513",
+          "#1ABC9C",
+          "#95A5A6"
+        ],
+        "background": "#FFFFFF",
+        "stroke_color": "#333333",
+        "stroke_width": 1.5
+      }
+    }
+  }
+}

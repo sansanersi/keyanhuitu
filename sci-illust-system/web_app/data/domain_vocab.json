@@ -1,0 +1,612 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "科研绘图领域词汇库",
+    "last_updated": "2026-07-21"
+  },
+  "domains": {
+    "biology": {
+      "name": "生物学",
+      "description": "细胞生物学、分子生物学",
+      "element_categories": {
+        "cell_organelle": {
+          "name": "细胞器",
+          "elements": [
+            {
+              "name": "细胞膜",
+              "english": "cell_membrane",
+              "type": "structural",
+              "shape": "lipid_bilayer",
+              "color_scheme": [
+                "#F5E6CA",
+                "#D4A574"
+              ],
+              "tags": [
+                "膜",
+                "磷脂"
+              ]
+            },
+            {
+              "name": "线粒体",
+              "english": "mitochondrion",
+              "type": "organelle",
+              "shape": "bean",
+              "color_scheme": [
+                "#E74C3C",
+                "#C0392B"
+              ],
+              "tags": [
+                "能量",
+                "ATP"
+              ]
+            },
+            {
+              "name": "细胞核",
+              "english": "nucleus",
+              "type": "organelle",
+              "shape": "circle",
+              "color_scheme": [
+                "#8E44AD",
+                "#9B59B6"
+              ],
+              "tags": [
+                "DNA",
+                "基因"
+              ]
+            },
+            {
+              "name": "内质网",
+              "english": "endoplasmic_reticulum",
+              "type": "organelle",
+              "shape": "folded_membrane",
+              "color_scheme": [
+                "#3498DB",
+                "#2980B9"
+              ],
+              "tags": [
+                "蛋白合成"
+              ]
+            },
+            {
+              "name": "高尔基体",
+              "english": "golgi_apparatus",
+              "type": "organelle",
+              "shape": "stacked_discs",
+              "color_scheme": [
+                "#2ECC71",
+                "#27AE60"
+              ],
+              "tags": [
+                "修饰",
+                "分泌"
+              ]
+            },
+            {
+              "name": "核糖体",
+              "english": "ribosome",
+              "type": "organelle",
+              "shape": "dot_cluster",
+              "color_scheme": [
+                "#E67E22",
+                "#D35400"
+              ],
+              "tags": [
+                "翻译"
+              ]
+            },
+            {
+              "name": "溶酶体",
+              "english": "lysosome",
+              "type": "organelle",
+              "shape": "circle_filled",
+              "color_scheme": [
+                "#E74C3C",
+                "#FF6B6B"
+              ],
+              "tags": [
+                "降解"
+              ]
+            },
+            {
+              "name": "液泡",
+              "english": "vacuole",
+              "type": "organelle",
+              "shape": "large_circle",
+              "color_scheme": [
+                "#85C1E9",
+                "#AED6F1"
+              ],
+              "tags": [
+                "储存"
+              ]
+            },
+            {
+              "name": "叶绿体",
+              "english": "chloroplast",
+              "type": "organelle",
+              "shape": "oval_thylakoid",
+              "color_scheme": [
+                "#27AE60",
+                "#2ECC71"
+              ],
+              "tags": [
+                "光合作用"
+              ]
+            }
+          ]
+        },
+        "molecule": {
+          "name": "生物分子",
+          "elements": [
+            {
+              "name": "DNA双螺旋",
+              "english": "dna_double_helix",
+              "type": "nucleic_acid",
+              "shape": "double_helix",
+              "color_scheme": [
+                "#3498DB",
+                "#E74C3C",
+                "#2ECC71",
+                "#F39C12"
+              ],
+              "tags": [
+                "遗传",
+                "基因"
+              ]
+            },
+            {
+              "name": "RNA",
+              "english": "rna",
+              "type": "nucleic_acid",
+              "shape": "single_strand",
+              "color_scheme": [
+                "#E74C3C",
+                "#FF6B6B"
+              ],
+              "tags": [
+                "转录"
+              ]
+            },
+            {
+              "name": "蛋白质",
+              "english": "protein",
+              "type": "biomolecule",
+              "shape": "folded_structure",
+              "color_scheme": [
+                "#9B59B6",
+                "#8E44AD"
+              ],
+              "tags": [
+                "酶",
+                "功能"
+              ]
+            }
+          ]
+        },
+        "signaling": {
+          "name": "信号通路组件",
+          "elements": [
+            {
+              "name": "受体",
+              "english": "receptor",
+              "type": "membrane_protein",
+              "shape": "transmembrane",
+              "color_scheme": [
+                "#3498DB",
+                "#2980B9"
+              ],
+              "tags": [
+                "信号",
+                "跨膜"
+              ]
+            },
+            {
+              "name": "配体",
+              "english": "ligand",
+              "type": "signaling_molecule",
+              "shape": "triangle_down",
+              "color_scheme": [
+                "#E74C3C",
+                "#C0392B"
+              ],
+              "tags": [
+                "信号",
+                "结合"
+              ]
+            },
+            {
+              "name": "激酶",
+              "english": "kinase",
+              "type": "enzyme",
+              "shape": "rounded_rect",
+              "color_scheme": [
+                "#F39C12",
+                "#E67E22"
+              ],
+              "tags": [
+                "磷酸化"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "chemistry": {
+      "name": "化学",
+      "element_categories": {
+        "functional_group": {
+          "name": "官能团",
+          "elements": [
+            {
+              "name": "羟基",
+              "english": "hydroxyl",
+              "type": "functional_group",
+              "shape": "oh_group",
+              "color_scheme": [
+                "#E74C3C",
+                "#C0392B"
+              ],
+              "tags": [
+                "OH",
+                "醇"
+              ]
+            },
+            {
+              "name": "羰基",
+              "english": "carbonyl",
+              "type": "functional_group",
+              "shape": "co_double",
+              "color_scheme": [
+                "#3498DB",
+                "#2980B9"
+              ],
+              "tags": [
+                "C=O"
+              ]
+            },
+            {
+              "name": "羧基",
+              "english": "carboxyl",
+              "type": "functional_group",
+              "shape": "cooh_group",
+              "color_scheme": [
+                "#E67E22",
+                "#D35400"
+              ],
+              "tags": [
+                "COOH",
+                "酸"
+              ]
+            },
+            {
+              "name": "氨基",
+              "english": "amino",
+              "type": "functional_group",
+              "shape": "nh2_group",
+              "color_scheme": [
+                "#27AE60",
+                "#2ECC71"
+              ],
+              "tags": [
+                "NH2",
+                "碱"
+              ]
+            },
+            {
+              "name": "苯环",
+              "english": "benzene_ring",
+              "type": "aromatic",
+              "shape": "hexagon_ring",
+              "color_scheme": [
+                "#8E44AD",
+                "#9B59B6"
+              ],
+              "tags": [
+                "芳香"
+              ]
+            },
+            {
+              "name": "甲基",
+              "english": "methyl",
+              "type": "alkyl",
+              "shape": "ch3_group",
+              "color_scheme": [
+                "#7F8C8D",
+                "#95A5A6"
+              ],
+              "tags": [
+                "CH3"
+              ]
+            }
+          ]
+        },
+        "reaction": {
+          "name": "反应符号",
+          "elements": [
+            {
+              "name": "反应箭头",
+              "english": "reaction_arrow",
+              "type": "reaction_symbol",
+              "shape": "right_arrow",
+              "color_scheme": [
+                "#2C3E50",
+                "#34495E"
+              ],
+              "tags": [
+                "反应"
+              ]
+            },
+            {
+              "name": "可逆箭头",
+              "english": "reversible_arrow",
+              "type": "reaction_symbol",
+              "shape": "double_arrow",
+              "color_scheme": [
+                "#2C3E50",
+                "#34495E"
+              ],
+              "tags": [
+                "平衡"
+              ]
+            },
+            {
+              "name": "加热符号",
+              "english": "heat",
+              "type": "reaction_symbol",
+              "shape": "triangle",
+              "color_scheme": [
+                "#E74C3C",
+                "#F39C12"
+              ],
+              "tags": [
+                "加热"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "materials": {
+      "name": "材料科学",
+      "element_categories": {
+        "crystal": {
+          "name": "晶体结构",
+          "elements": [
+            {
+              "name": "面心立方晶格",
+              "english": "fcc_lattice",
+              "type": "crystal_structure",
+              "shape": "fcc",
+              "color_scheme": [
+                "#3498DB",
+                "#E74C3C"
+              ],
+              "tags": [
+                "FCC",
+                "金属"
+              ]
+            },
+            {
+              "name": "体心立方晶格",
+              "english": "bcc_lattice",
+              "type": "crystal_structure",
+              "shape": "bcc",
+              "color_scheme": [
+                "#2ECC71",
+                "#E74C3C"
+              ],
+              "tags": [
+                "BCC",
+                "金属"
+              ]
+            }
+          ]
+        },
+        "nanomaterial": {
+          "name": "纳米材料",
+          "elements": [
+            {
+              "name": "纳米颗粒",
+              "english": "nanoparticle",
+              "type": "nanostructure",
+              "shape": "sphere_gradient",
+              "color_scheme": [
+                "#3498DB",
+                "#2980B9"
+              ],
+              "tags": [
+                "0D",
+                "球体"
+              ]
+            },
+            {
+              "name": "石墨烯",
+              "english": "graphene",
+              "type": "2d_material",
+              "shape": "honeycomb",
+              "color_scheme": [
+                "#9B59B6",
+                "#8E44AD"
+              ],
+              "tags": [
+                "2D",
+                "六角"
+              ]
+            },
+            {
+              "name": "碳纳米管",
+              "english": "nanotube",
+              "type": "nanostructure",
+              "shape": "tube_cylinder",
+              "color_scheme": [
+                "#7F8C8D",
+                "#95A5A6"
+              ],
+              "tags": [
+                "1D",
+                "碳管"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "environment": {
+      "name": "环境科学",
+      "element_categories": {
+        "ecosystem": {
+          "name": "生态系统组件",
+          "elements": [
+            {
+              "name": "植物",
+              "english": "plant",
+              "type": "organism",
+              "shape": "leaf_symbol",
+              "color_scheme": [
+                "#27AE60",
+                "#2ECC71"
+              ],
+              "tags": [
+                "生产者"
+              ]
+            },
+            {
+              "name": "动物",
+              "english": "animal",
+              "type": "organism",
+              "shape": "animal_symbol",
+              "color_scheme": [
+                "#E67E22",
+                "#D35400"
+              ],
+              "tags": [
+                "消费者"
+              ]
+            },
+            {
+              "name": "微生物",
+              "english": "microorganism",
+              "type": "organism",
+              "shape": "bacteria_shape",
+              "color_scheme": [
+                "#8E44AD",
+                "#9B59B6"
+              ],
+              "tags": [
+                "细菌"
+              ]
+            }
+          ]
+        },
+        "cycle": {
+          "name": "循环",
+          "elements": [
+            {
+              "name": "碳循环",
+              "english": "carbon_cycle",
+              "type": "cycle_process",
+              "shape": "circular_arrows",
+              "color_scheme": [
+                "#7F8C8D",
+                "#95A5A6"
+              ],
+              "tags": [
+                "C",
+                "循环"
+              ]
+            },
+            {
+              "name": "水循环",
+              "english": "water_cycle",
+              "type": "cycle_process",
+              "shape": "circular_arrows",
+              "color_scheme": [
+                "#1ABC9C",
+                "#16A085"
+              ],
+              "tags": [
+                "H2O"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "spatial_relations": {
+    "above": {
+      "name": "上方",
+      "type": "vertical"
+    },
+    "below": {
+      "name": "下方",
+      "type": "vertical"
+    },
+    "left_of": {
+      "name": "左侧",
+      "type": "horizontal"
+    },
+    "right_of": {
+      "name": "右侧",
+      "type": "horizontal"
+    },
+    "inside": {
+      "name": "内部",
+      "type": "containment"
+    },
+    "connected_to": {
+      "name": "连接",
+      "type": "connection"
+    },
+    "flows_to": {
+      "name": "流向",
+      "type": "directed"
+    }
+  },
+  "figure_types": {
+    "mechanism_diagram": {
+      "name": "机制图"
+    },
+    "flow_diagram": {
+      "name": "流程图"
+    },
+    "pathway_diagram": {
+      "name": "通路图"
+    },
+    "schematic_diagram": {
+      "name": "示意图"
+    }
+  },
+  "view_types": {
+    "2d_top": {
+      "name": "俯视2D"
+    },
+    "2d_cross_section": {
+      "name": "剖面图"
+    }
+  },
+  "style_references": {
+    "nature_style": {
+      "name": "Nature风格",
+      "colors": [
+        "#2C3E50",
+        "#3498DB",
+        "#E74C3C",
+        "#2ECC71",
+        "#F39C12"
+      ],
+      "stroke_width": 1.5
+    },
+    "science_style": {
+      "name": "科学风格",
+      "colors": [
+        "#333333",
+        "#2980B9",
+        "#C0392B",
+        "#27AE60",
+        "#D35400"
+      ],
+      "stroke_width": 1.2
+    }
+  }
+}

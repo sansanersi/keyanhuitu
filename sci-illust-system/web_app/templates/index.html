@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科研配图管理系统</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #333; }
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: #1a1a2e; color: #fff; padding: 20px 0; flex-shrink: 0; }
+.sidebar h2 { padding: 0 20px 20px; font-size: 16px; border-bottom: 1px solid #2a2a4e; margin-bottom: 10px; }
+.sidebar .nav-item { padding: 12px 20px; cursor: pointer; transition: .2s; font-size: 14px; }
+.sidebar .nav-item:hover { background: #2a2a4e; }
+.sidebar .nav-item.active { background: #0f3460; border-left: 3px solid #4a90d9; }
+.main { flex: 1; padding: 24px; overflow-y: auto; }
+.page { display: none; }
+.page.active { display: block; }
+h1 { font-size: 22px; margin-bottom: 20px; }
+.card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.card h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
+.card .value { font-size: 32px; font-weight: bold; color: #1a1a2e; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 8px; border-bottom: 2px solid #eee; color: #666; font-weight: 600; }
+td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.badge-biology { background: #e3f2fd; color: #1976d2; }
+.badge-chemistry { background: #fce4ec; color: #c62828; }
+.badge-materials { background: #e8f5e9; color: #2e7d32; }
+.badge-environment { background: #fff3e0; color: #e65100; }
+input, select, textarea { padding: 8px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; width: 100%; margin-bottom: 8px; }
+button { padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.btn-primary { background: #4a90d9; color: #fff; }
+.btn-primary:hover { background: #357abd; }
+.btn-danger { background: #e74c3c; color: #fff; }
+.btn-sm { padding: 4px 12px; font-size: 12px; }
+.toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.draw-container { display: flex; flex-direction: column; height: calc(100vh - 120px); background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.draw-chat { flex: 1; overflow-y: auto; padding: 16px; background: #f8f9fa; border-radius: 8px 8px 0 0; }
+.chat-message { display: flex; gap: 12px; margin-bottom: 16px; }
+.chat-message.user { flex-direction: row-reverse; }
+.msg-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.chat-message.bot .msg-icon { background: #e3f2fd; }
+.chat-message.user .msg-icon { background: #e8f5e9; }
+.msg-content { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+.chat-message.bot .msg-content { background: #fff; border: 1px solid #e0e0e0; }
+.chat-message.user .msg-content { background: #e3f2fd; }
+.msg-content .svg-preview { max-width: 100%; margin-top: 8px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+.msg-content .svg-preview svg { max-width: 100%; height: auto; }
+.element-tag { display: inline-block; padding: 2px 8px; margin: 2px; background: #e3f2fd; color: #1976d2; border-radius: 4px; font-size: 12px; border: 1px solid #bbdefb; }
+.relation-tag { display: inline-block; padding: 2px 8px; margin: 2px; background: #fce4ec; color: #c62828; border-radius: 4px; font-size: 12px; border: 1px solid #f8bbd0; }
+.draw-controls { display: flex; gap: 8px; padding: 8px 16px; background: #fff; border-top: 1px solid #eee; }
+.draw-select { padding: 6px 12px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 13px; background: #fff; }
+.draw-input-row { display: flex; gap: 8px; padding: 12px 16px; background: #fff; border-top: 1px solid #eee; border-radius: 0 0 8px 8px; }
+.draw-input-row textarea { flex: 1; padding: 10px; border: 1px solid #d0d0d0; border-radius: 8px; font-size: 14px; resize: none; }
+.draw-input-row textarea:focus { outline: none; border-color: #4a90d9; }
+.draw-send { padding: 10px 24px; font-size: 14px; }
+.draw-loading { text-align: center; padding: 20px; color: #999; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: #333; color: #fff; padding: 12px 24px; border-radius: 8px; opacity: 0; transition: .3s; z-index: 999; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <h2>科研配图管理</h2>
+    <div class="nav-item active" onclick="switchPage('dashboard')">📊 仪表盘</div>
+    <div class="nav-item" onclick="switchPage('draw')">🎨 科研绘图</div>
+    <div class="nav-item" onclick="switchPage('entries')">📚 知识条目</div>
+    <div class="nav-item" onclick="switchPage('documents')">📄 文档管理</div>
+    <div class="nav-item" onclick="switchPage('search')">🔍 知识检索</div>
+    <div class="nav-item" onclick="switchPage('elements')">🎨 元素库</div>
+    <div class="nav-item" onclick="switchPage('dify')">🔗 Dify 集成</div>
+    <div class="nav-item" onclick="switchPage('settings')">⚙️ 设置</div>
+  </div>
+  <div class="main">
+    <div id="page-dashboard" class="page active"><h1>📊 仪表盘</h1><p style="color:#999">加载中...</p></div>
+    <div id="page-entries" class="page"></div>
+    <div id="page-documents" class="page"></div>
+    <div id="page-search" class="page"><h1>🔍 知识检索</h1><div class="card"><div class="toolbar"><input id="sq" placeholder="输入关键词..." style="flex:1"><button class="btn-primary" onclick="doSearch()">检索</button></div><div id="search-results"></div></div></div>
+    <div id="page-elements" class="page"></div>
+    <div id="page-dify" class="page"><h1>🔗 Dify 集成</h1><div class="card"><input id="dify-url" placeholder="http://localhost:8080/api"><input id="dify-key" placeholder="API Key"><button class="btn-primary" onclick="testDify()">测试连接</button><div id="dify-status"></div></div></div>
+    <div id="page-settings" class="page"><h1>⚙️ 设置</h1><div class="card"><h3>Ollama 状态</h3><div id="ollama-status">检查中...</div></div></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<div id="page-draw" class="page">
+  <div class="draw-container">
+    <div class="draw-chat" id="draw-chat">
+      <div class="chat-message bot">
+        <div class="msg-icon">Bot</div>
+        <div class="msg-content"><b>科研绘图助手</b><p>描述你的科研绘图需求，我来帮你生成。</p></div>
+      </div>
+    </div>
+    <div class="draw-controls">
+      <select id="draw-model" class="draw-select" style="max-width:140px"><option value="">自动(关键词)</option></select>
+      <select id="draw-layout" class="draw-select"><option value="">自动</option><option value="hierarchical">层级</option><option value="force_directed">力导向</option><option value="grid">网格</option><option value="radial">径向</option></select>
+      <select id="draw-style" class="draw-select"><option value="science">科学</option><option value="nature">Nature</option><option value="cell">Cell</option><option value="minimal">极简</option></select>
+      <select id="draw-size" class="draw-select"><option value="900x600">中</option><option value="1200x800">大</option><option value="600x400">小</option></select>
+      <button class="btn-primary" id="dl-btn" style="display:none" onclick="downloadSVG()">下载SVG</button>
+    </div>
+    <div class="draw-input-row">
+      <textarea id="draw-input" placeholder="输入需求，如: 线粒体 细胞核 内质网" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();doDraw()}"></textarea>
+      <button class="btn-primary draw-send" id="draw-btn" onclick="doDraw()">生成</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = "";
+
+function toast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(function() { t.classList.remove("show"); }, 2500);
+}
+
+function switchPage(name) {
+  var pages = document.querySelectorAll(".page");
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove("active");
+  var items = document.querySelectorAll(".nav-item");
+  for (var i = 0; i < items.length; i++) items[i].classList.remove("active");
+  document.getElementById("page-" + name).classList.add("active");
+  var nav = document.querySelector(".nav-item[onclick*='" + name + "']");
+  if (nav) nav.classList.add("active");
+  if (name === "dashboard") loadDashboard();
+  else if (name === "entries") loadEntries();
+  else if (name === "documents") loadDocuments();
+  else if (name === "elements") loadElements("");
+  else if (name === "search") {}
+  else if (name === "dify") {}
+  else if (name === "settings") {
+    fetch("/api/ollama/status").then(function(r){return r.json()}).then(function(d){
+      document.getElementById("ollama-status").textContent = d.running ? "Ollama 运行中: " + d.models.join(", ") : "Ollama 未运行";
+    });
+  }
+}
+
+function ajax(method, url, body, cb) {
+  var x = new XMLHttpRequest();
+  x.open(method, url, true);
+  if (body) x.setRequestHeader("Content-Type", "application/json");
+  x.onload = function() { cb(JSON.parse(x.responseText)); };
+  x.send(body ? JSON.stringify(body) : null);
+}
+
+function loadDashboard() {
+  ajax("GET", "/api/dashboard", null, function(d) {
+    var h = "<h1>📊 仪表盘</h1><div class='stats-grid'>";
+    h += "<div class='card'><h3>知识条目</h3><div class='value'>" + d.entries + "</div></div>";
+    h += "<div class='card'><h3>已向量文档</h3><div class='value'>" + (d.vectorized_documents||0) + "</div></div>";
+    h += "<div class='card'><h3>总文档</h3><div class='value'>" + d.documents + "</div></div>";
+    h += "<div class='card'><h3>内置术语</h3><div class='value'>" + d.kb_terms + "</div></div>";
+    h += "<div class='card'><h3>向量索引</h3><div class='value'>" + d.kb_vectors + "</div></div>";
+    h += "<div class='card'><h3>Ollama 模型</h3><div class='value'>" + (d.ollama_models||[]).length + "</div></div>";
+    h += "</div><div class='card'><h3>系统状态</h3><div>";
+    h += "知识库: " + d.entries + "条 | Ollama: " + (d.ollama_models.length ? "运行中" : "未运行");
+    h += " | Dify: " + (d.dify_configured ? "已配置" : "未配置");
+    h += "</div></div>";
+    document.getElementById("page-dashboard").innerHTML = h;
+  });
+}
+
+function loadEntries() {
+  ajax("GET", "/api/entries", null, function(d) {
+    var h = "<h1>📚 知识条目</h1><div class='card'><table><tr><th>名称</th><th>英文</th><th>学科</th><th>操作</th></tr>";
+    for (var i = 0; i < d.entries.length; i++) {
+      var e = d.entries[i];
+      h += "<tr><td><b>" + e.name + "</b></td><td>" + (e.english||"") + "</td><td>" + (e.domain||"") + "</td>";
+      h += "<td><button class='btn-primary btn-sm' onclick='alert(\"Edit " + e.id + "\")'>编辑</button></td></tr>";
+    }
+    h += "</table></div>";
+    document.getElementById("page-entries").innerHTML = h;
+  });
+}
+
+function loadDocuments() {
+  ajax("GET", "/api/documents", null, function(d) {
+    var h = "<h1>📄 文档管理</h1><div class='card'><input type='file' id='doc-upload' multiple><button class='btn-primary' onclick='uploadDoc()'>上传</button><div id='upload-progress'></div></div>";
+    h += "<div class='card'><table><tr><th>文件</th><th>状态</th><th>操作</th></tr>";
+    for (var i = 0; i < (d.documents||[]).length; i++) {
+      var f = d.documents[i];
+      h += "<tr><td>" + f.filename + "</td><td>" + (f.vectorized ? "已向量" : "待处理") + "</td>";
+      h += "<td><button class='btn-danger btn-sm' onclick='deleteDoc(" + f.id + ")'><\/button></td></tr>";
+    }
+    h += "</table></div>";
+    document.getElementById("page-documents").innerHTML = h;
+  });
+}
+
+function doSearch() {
+  var q = document.getElementById("sq").value;
+  if (!q) return;
+  ajax("GET", "/api/search?q=" + encodeURIComponent(q), null, function(d) {
+    var h = "<h3>匹配 (" + d.results.length + ")</h3><table><tr><th>术语</th><th>学科</th><th>得分</th></tr>";
+    for (var i = 0; i < d.results.length; i++) {
+      h += "<tr><td><b>" + d.results[i].term + "</b></td><td>" + (d.results[i].metadata.domain_name||"") + "</td><td>" + d.results[i].score + "</td></tr>";
+    }
+    h += "</table>";
+    document.getElementById("search-results").innerHTML = h;
+  });
+}
+
+function doDraw() {
+  var i = document.getElementById("draw-input");
+  if (!i) return;
+  var t = i.value.trim();
+  if (!t) return;
+  var c = document.getElementById("draw-chat");
+  c.innerHTML += "<div class='chat-message user'><div class='msg-icon'>User</div><div class='msg-content'><p>" + t + "</p></div></div>";
+  i.value = "";
+  c.innerHTML += "<div class='chat-message bot' id='loading'><div class='msg-icon'>Bot</div><div class='msg-content'><div class='draw-loading'>分析中...</div></div></div>";
+  c.scrollTop = c.scrollHeight;
+  var l = document.getElementById("draw-layout") ? document.getElementById("draw-layout").value : "";
+  var s = document.getElementById("draw-style") ? document.getElementById("draw-style").value : "science";
+  var m = document.getElementById("draw-model") ? document.getElementById("draw-model").value : "";
+  var sz = document.getElementById("draw-size") ? document.getElementById("draw-size").value.split("x") : ["900","600"];
+  var btn = document.getElementById("draw-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "生成中"; }
+  
+  ajax("POST", "/api/draw", {text:t, layout:l, style:s, model:m, canvas_width:parseInt(sz[0]), canvas_height:parseInt(sz[1])}, function(d) {
+    var ld = document.getElementById("loading");
+    if (ld) ld.remove();
+    if (!d.success) {
+      c.innerHTML += "<div class='chat-message bot'><div class='msg-icon'>Bot</div><div class='msg-content'><p>错误: " + d.error + "</p></div></div>";
+      if (btn) { btn.disabled = false; btn.textContent = "生成"; }
+      return;
+    }
+    var el = "";
+    for (var j = 0; j < (d.elements||[]).length; j++) {
+      el += "<span class='element-tag'>" + d.elements[j].name + "</span> ";
+    }
+    var rl = "";
+    for (var j = 0; j < (d.relations||[]).length; j++) {
+      rl += "<span class='relation-tag'>" + d.relations[j].source + " -> " + d.relations[j].target + " </span>";
+    }
+    var modelUsed = d.model_used ? " [" + d.model_used + "]" : "";
+    var h = modelUsed + "<div><b>元素</b>: " + el + "</div><div style='margin-bottom:8px'><b>关系</b>: " + rl + "</div>";
+    h += "<div class='svg-preview'>" + d.svg + "</div>";
+    c.innerHTML += "<div class='chat-message bot'><div class='msg-icon'>Bot</div><div class='msg-content'>" + h + "</div></div>";
+    c.scrollTop = c.scrollHeight;
+    var dl = document.getElementById("dl-btn");
+    if (dl) dl.style.display = "inline-block";
+    window._lastSvg = d.svg;
+    if (btn) { btn.disabled = false; btn.textContent = "生成"; }
+  });
+}
+
+function downloadSVG() {
+  var s = window._lastSvg;
+  if (!s) return;
+  var blob = new Blob([s], {type: "image/svg+xml"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "sci_illust.svg"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function testDify() {
+  var url = document.getElementById("dify-url").value;
+  var key = document.getElementById("dify-key").value;
+  ajax("POST", "/api/dify/configure", {api_key: key, base_url: url}, function(d) {
+    document.getElementById("dify-status").textContent = d.status === "ok" ? "连接成功" : "失败: " + d.message;
+  });
+}
+
+function uploadDoc() {
+  var input = document.getElementById("doc-upload");
+  if (!input || !input.files.length) { toast("选择文件"); return; }
+  var fd = new FormData();
+  for (var i = 0; i < input.files.length; i++) fd.append("file", input.files[i]);
+  var x = new XMLHttpRequest();
+  x.open("POST", "/api/document/upload", true);
+  x.onload = function() {
+    var d = JSON.parse(x.responseText);
+    toast(d.success ? "已向量化" : "失败");
+    loadDocuments();
+  };
+  x.send(fd);
+}
+
+function deleteDoc(id) {
+  if (!confirm("确定删除?")) return;
+  var x = new XMLHttpRequest();
+  x.open("DELETE", "/api/documents/" + id, true);
+  x.onload = function() { toast("已删除"); loadDocuments(); };
+  x.send();
+}
+
+function loadElements(t) {
+  if (!t) { document.getElementById("page-elements").innerHTML = "<h1>🎨 元素库</h1><div class='toolbar'><input placeholder='搜索元素...' onkeydown='if(event.key===\"Enter\")loadElements(this.value)'><button class='btn-primary' onclick='loadElements(this.previousElementSibling.value)'>搜索</button></div>"; return; }
+  ajax("GET", "/api/elements/suggest?text=" + encodeURIComponent(t), null, function(d) {
+    var h = "<h1>🎨 元素库</h1><div class='toolbar'><input placeholder='搜索元素...' onkeydown='if(event.key===\"Enter\")loadElements(this.value)'><button class='btn-primary' onclick='loadElements(this.previousElementSibling.value)'>搜索</button></div><div>";
+    for (var i = 0; i < (d.elements||[]).length; i++) {
+      h += "<div class='card' style='display:inline-block;width:200px;margin:8px'><b>" + d.elements[i].name + "</b><br><span style='font-size:12px;color:#666'>" + (d.elements[i].english_name||"") + "</span><div class='badge badge-biology'>" + (d.elements[i].domain||"") + "</div></div>";
+    }
+    h += "</div>";
+    document.getElementById("page-elements").innerHTML = h;
+  });
+}
+
+// Initialization
+loadDashboard();
+// Load models for draw page
+ajax("GET", "/api/draw/models", null, function(d) {
+  var sel = document.getElementById("draw-model");
+  if (!sel) return;
+  for (var i = 0; i < (d.models||[]).length; i++) {
+    var opt = document.createElement("option");
+    opt.value = d.models[i]; opt.textContent = d.models[i];
+    sel.appendChild(opt);
+  }
+});
+</script>
+</body>
+</html>
