@@ -1,6 +1,8 @@
 from drawing.layout_engine import LayoutType
+from drawing.component_composer import ComponentComposer
 from drawing.renderer import FigureElement, FigureRelation, ScientificIllustration
 from knowledge_base.kb_core import KnowledgeBase
+from orchestrator.component_planner import ComponentPlanner
 from orchestrator.text_analyzer import RequirementAnalyzer
 
 
@@ -52,6 +54,42 @@ class SciIllustPipeline:
         with open(path, "w", encoding="utf-8") as f:
             f.write(result.get("svg", ""))
         return path
+
+    def process_components(
+        self,
+        text,
+        model="",
+        style_name="science",
+        layout="",
+        canvas_width=900,
+        canvas_height=600,
+        auto_render=True,
+    ):
+        planner = ComponentPlanner(self.kb)
+        plan = planner.plan(text, model=model, style=style_name, layout=layout)
+        svg = ComponentComposer().render(plan, width=canvas_width, height=canvas_height) if auto_render else ""
+        return {
+            "status": "completed",
+            "mode": "components",
+            "svg": svg,
+            "component_plan": plan,
+            "components": plan.get("components", []),
+            "connections": plan.get("connections", []),
+            "analysis": {
+                "domain": self._domain_from_components(plan.get("components", [])),
+                "figure_type": "component_diagram",
+                "layout": plan.get("layout", layout or "hierarchical"),
+                "style": plan.get("style", style_name or "science"),
+                "source": plan.get("source", "ollama" if model else "fallback"),
+            },
+            "figure_info": {
+                "elements": len(plan.get("components", [])),
+                "relations": len(plan.get("connections", [])),
+                "figure_type": "component_diagram",
+                "style": plan.get("style", style_name or "science"),
+                "canvas": str(canvas_width) + "x" + str(canvas_height),
+            },
+        }
 
     def compose_scene(self, text, width=1000, height=700):
         """Knowledge Graph -> SVG scene."""
@@ -108,3 +146,7 @@ class SciIllustPipeline:
         if shape in ("transmembrane", "double_helix"):
             return 76
         return 58
+
+    def _domain_from_components(self, components):
+        joined = " ".join([component.get("name", "") + " " + component.get("caption", "") for component in components])
+        return RequirementAnalyzer(self.kb)._guess_domain(joined)

@@ -230,36 +230,68 @@ def draw():
         "radial": LayoutType.RADIAL,
     }
     pipeline = SciIllustPipeline()
-    result = pipeline.process(
-        text,
-        figure_type=figure_type,
-        style_name=style,
-        layout_type=layout_map.get(layout) if layout else None,
-        canvas_width=canvas_width,
-        canvas_height=canvas_height,
-        auto_render=True,
-    )
+    if model:
+        result = pipeline.process_components(
+            text,
+            model=model,
+            style_name=style,
+            layout=layout or "hierarchical",
+            canvas_width=canvas_width,
+            canvas_height=canvas_height,
+            auto_render=True,
+        )
+    else:
+        result = pipeline.process(
+            text,
+            figure_type=figure_type,
+            style_name=style,
+            layout_type=layout_map.get(layout) if layout else None,
+            canvas_width=canvas_width,
+            canvas_height=canvas_height,
+            auto_render=True,
+        )
 
     analysis = result.get("analysis", {})
     elements = result.get("elements", [])
     relations = result.get("relations", [])
 
-    element_list = [
-        {"id": item.get("name", ""), "name": item.get("name", ""), "shape": item.get("shape", "")}
-        for item in elements[:15]
-    ]
-    relation_list = []
-    for relation in relations[:10]:
-        source = getattr(relation, "source", "")
-        target = getattr(relation, "target", "")
-        relation_type = getattr(relation, "relation_type", "connected_to")
-        directed = getattr(relation, "directed", False)
-        relation_list.append({
-            "source": source,
-            "target": target,
-            "type": relation_type,
-            "directed": directed,
-        })
+    if result.get("mode") == "components":
+        element_list = [
+            {
+                "id": item.get("id", ""),
+                "name": item.get("name", ""),
+                "shape": item.get("image_key", ""),
+                "caption": item.get("caption", ""),
+            }
+            for item in result.get("components", [])[:15]
+        ]
+        relation_list = [
+            {
+                "source": item.get("source", ""),
+                "target": item.get("target", ""),
+                "type": item.get("type", "arrow"),
+                "label": item.get("label", ""),
+                "directed": True,
+            }
+            for item in result.get("connections", [])[:12]
+        ]
+    else:
+        element_list = [
+            {"id": item.get("name", ""), "name": item.get("name", ""), "shape": item.get("shape", "")}
+            for item in elements[:15]
+        ]
+        relation_list = []
+        for relation in relations[:10]:
+            source = getattr(relation, "source", "")
+            target = getattr(relation, "target", "")
+            relation_type = getattr(relation, "relation_type", "connected_to")
+            directed = getattr(relation, "directed", False)
+            relation_list.append({
+                "source": source,
+                "target": target,
+                "type": relation_type,
+                "directed": directed,
+            })
 
     return jsonify({
         "success": True,
@@ -273,6 +305,8 @@ def draw():
         "elements": element_list,
         "relations": relation_list,
         "summary": analysis.get("analysis_summary", ""),
+        "mode": result.get("mode", "elements"),
+        "component_plan": result.get("component_plan"),
         "model_used": model or "keyword",
         "timestamp": str(datetime.now()),
     })
