@@ -11,6 +11,7 @@ if SYSTEM_DIR not in sys.path:
 from orchestrator.component_planner import ComponentPlanner
 from orchestrator.pipeline import SciIllustPipeline
 from drawing.component_composer import ComponentComposer
+from drawing.layout_engine import LayoutEdge, LayoutEngine, LayoutNode, LayoutType
 
 
 class FakeClient:
@@ -94,6 +95,41 @@ class ComponentCompositionTest(unittest.TestCase):
         self.assertIn('class="component-title"', svg)
         self.assertIn('marker-end="url(#component-arrow)"', svg)
         self.assertIn("结合", svg)
+
+    def test_component_composer_wraps_dense_hierarchical_components(self):
+        plan = {
+            "title": "Dense pathway",
+            "layout": "hierarchical",
+            "components": [
+                {"id": "c" + str(index), "name": "C" + str(index), "caption": "step"}
+                for index in range(8)
+            ],
+            "connections": [
+                {"source": "c" + str(index), "target": "c" + str(index + 1), "label": "next"}
+                for index in range(7)
+            ],
+        }
+
+        components = ComponentComposer()._layout_components(plan, 900, 600)
+        ys = sorted(set(round(component["y"]) for component in components))
+        first_row = [component for component in components if round(component["y"]) == ys[0]]
+
+        self.assertGreaterEqual(len(ys), 2)
+        self.assertEqual(len(first_row), 4)
+        self.assertGreater(min(component["x"] for component in components), 40)
+
+    def test_hierarchical_layout_spreads_chain_left_to_right(self):
+        nodes = [LayoutNode("n" + str(index), "N" + str(index), 84, 58) for index in range(8)]
+        edges = [
+            LayoutEdge("n" + str(index), "n" + str(index + 1), directed=True)
+            for index in range(7)
+        ]
+
+        result = LayoutEngine().layout(nodes, edges, LayoutType.HIERARCHICAL, 900, 600)
+        xs = [result.positions["n" + str(index)][0] for index in range(8)]
+
+        self.assertGreater(max(xs) - min(xs), 650)
+        self.assertEqual(xs, sorted(xs))
 
     def test_pipeline_component_mode_returns_component_svg(self):
         result = SciIllustPipeline().process_components(

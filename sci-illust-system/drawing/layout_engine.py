@@ -68,11 +68,18 @@ class LayoutEngine:
             nm[nid].depth = d
             for c in adj.get(nid, []):
                 if c not in visited: q.append((c, d+1))
+        if len(visited) < len(nodes):
+            last_depth = max((nm[nid].depth for nid in visited), default=0)
+            for n in nodes:
+                if n.id not in visited:
+                    last_depth += 1
+                    n.depth = last_depth
         layers = {}
         for n in nodes: layers.setdefault(n.depth, []).append(n)
         for d, ns in layers.items():
             for i, n in enumerate(ns):
-                n.x = i * 120 - len(ns) * 60 + 60; n.y = d * 150
+                n.x = d * 170
+                n.y = i * 120 - (len(ns) - 1) * 60
     def _radial(self, nodes, edges):
         deg = {n.id: 0 for n in nodes}
         for e in edges:

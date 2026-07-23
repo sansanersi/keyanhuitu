@@ -98,11 +98,26 @@ class ComponentComposer:
             gap_y = 150
             return 40 + (index % cols) * gap_x, 80 + (index // cols) * gap_y
 
-        left = 50
-        right = width - 200
-        usable = max(right - left, 1)
-        x = left + usable * (index / max(total - 1, 1))
-        y = height * 0.42 + (28 if index % 2 else -28)
+        import math
+
+        card_w = 150
+        card_h = 112
+        margin_x = 44
+        top = 72
+        bottom = 44
+        max_cols = 4 if width >= 760 else 3
+        cols = min(max_cols, total)
+        rows = max(1, int(math.ceil(total / cols)))
+        row = index // cols
+        col = index % cols
+        items_in_row = cols if row < rows - 1 else total - row * cols
+        row_cols = max(items_in_row, 1)
+        usable_w = max(width - margin_x * 2, card_w)
+        cell_w = usable_w / row_cols
+        usable_h = max(height - top - bottom, card_h)
+        cell_h = usable_h / rows
+        x = margin_x + col * cell_w + max((cell_w - card_w) / 2, 0)
+        y = top + row * cell_h + max((cell_h - card_h) / 2, 0)
         return x, y
 
     def _render_connections(self, connections, component_map):
@@ -112,28 +127,48 @@ class ComponentComposer:
             target = component_map.get(connection.get("target"))
             if not source or not target:
                 continue
-            x1 = source["x"] + source["width"]
-            y1 = source["y"] + source["height"] / 2
-            x2 = target["x"]
-            y2 = target["y"] + target["height"] / 2
-            if x2 < x1:
-                x1 = source["x"] + source["width"] / 2
+            sx = source["x"] + source["width"] / 2
+            sy = source["y"] + source["height"] / 2
+            tx = target["x"] + target["width"] / 2
+            ty = target["y"] + target["height"] / 2
+            same_row = abs(sy - ty) < max(source["height"], target["height"]) * 0.75
+            if same_row and tx >= sx:
+                x1 = source["x"] + source["width"]
+                y1 = sy
+                x2 = target["x"]
+                y2 = ty
+            elif same_row:
+                x1 = source["x"]
+                y1 = sy
+                x2 = target["x"] + target["width"]
+                y2 = ty
+            elif ty >= sy:
+                x1 = sx
                 y1 = source["y"] + source["height"]
-                x2 = target["x"] + target["width"] / 2
+                x2 = tx
                 y2 = target["y"]
+            else:
+                x1 = sx
+                y1 = source["y"]
+                x2 = tx
+                y2 = target["y"] + target["height"]
+            cx1 = x1 + (x2 - x1) * 0.5
+            cy1 = y1
+            cx2 = x1 + (x2 - x1) * 0.5
+            cy2 = y2
             parts.append(
                 "<path class=\"component-connection\" d=\"M"
                 + self._num(x1)
                 + " "
                 + self._num(y1)
                 + " C "
-                + self._num((x1 + x2) / 2)
+                + self._num(cx1)
                 + " "
-                + self._num(y1)
+                + self._num(cy1)
                 + ", "
-                + self._num((x1 + x2) / 2)
+                + self._num(cx2)
                 + " "
-                + self._num(y2)
+                + self._num(cy2)
                 + ", "
                 + self._num(x2)
                 + " "
