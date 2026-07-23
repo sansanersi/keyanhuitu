@@ -526,7 +526,7 @@ tbody tr:hover { background: #f8fbff; }
 }
 @keyframes svgPop {
   from { opacity: 0; transform: translateY(10px) scale(.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -535,6 +535,75 @@ tbody tr:hover { background: #f8fbff; }
     scroll-behavior: auto !important;
     transition-duration: .001ms !important;
   }
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.32);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s var(--ease-out);
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-content {
+  width: 90%;
+  max-width: 540px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 32px 80px rgba(0,0,0,.22);
+  transform: translateY(12px) scale(.98);
+  transition: transform .25s var(--ease-out);
+}
+.modal-overlay.open .modal-content {
+  transform: translateY(0) scale(1);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 50%;
+}
+.modal-close:hover {
+  background: #f1f4f8;
+  color: var(--ink);
+}
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
 }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
@@ -765,7 +834,7 @@ tbody tr:hover { background: #f8fbff; }
   </main>
 </div>
 <div id="toast" class="toast"></div>
-
+<!-- edit modal -->
 <script>
 var lastSvg = "";
 var pageTitles = {
@@ -894,6 +963,49 @@ function switchPage(name) {
   scheduleEnhance($("page-" + name));
 }
 
+function openEditModal(id) {
+  request("GET", "/api/entries?search=" + encodeURIComponent("")).then(function(data) {
+    var entry = null;
+    if (data.entries) {
+      data.entries.forEach(function(e) {
+        if (String(e.id) === String(id)) entry = e;
+      });
+    }
+    if (!entry) { toast("未找到条目"); return; }
+    $("edit-id").value = entry.id;
+    $("edit-name").value = entry.name || "";
+    $("edit-english").value = entry.english || "";
+    $("edit-domain").value = entry.domain || "";
+    $("edit-category").value = entry.category || "";
+    $("edit-shape").value = entry.shape || "";
+    $("edit-color-scheme").value = entry.color_scheme || "";
+    $("edit-description").value = entry.description || "";
+    var tags = [];
+    try { tags = JSON.parse(entry.tags || "[]"); } catch(e) {}
+    $("edit-tags").value = tags.join(", ");
+    var modal = $("edit-modal");
+    modal.style.display = "flex";
+    modal.offsetHeight;
+    modal.classList.add("open");
+  }).catch(function(error) {
+    toast("加载条目失败: " + error.message);
+  });
+}
+
+
+
+
+
+function deleteEntry(id) {
+  if (!confirm("确定要删除此条目吗？此操作不可撤销。")) return;
+  request("DELETE", "/api/entries/" + id).then(function() {
+    toast("条目已删除");
+    loadEntries();
+  }).catch(function(error) {
+    toast("删除失败: " + error.message);
+  });
+}
+
 function loadDashboard() {
   request("GET", "/api/dashboard").then(function(data) {
     $("app-status").textContent = "知识库 " + data.entries + " 条，Ollama 模型 " + (data.ollama_models || []).length + " 个";
@@ -940,28 +1052,29 @@ function loadEntries() {
       $("entries-table").innerHTML = "<div class=\"empty\">没有找到匹配的知识条目。</div>";
       return;
     }
-    var html = "<table><thead><tr><th>名称</th><th>英文名</th><th>学科</th><th>类别</th><th>图元</th><th>标签</th></tr></thead><tbody>";
+var html = "<table><thead><tr><th>名称</th><th>英文名</th><th>学科</th><th>类别</th><th>图元</th><th>标签</th><th>操作</th></tr></thead><tbody>";
     data.entries.forEach(function(entry) {
       var tags = [];
       try { tags = JSON.parse(entry.tags || "[]"); } catch (e) { tags = []; }
-      html += "<tr>";
+      html += "<tr data-id=\"" + entry.id + "\">";
       html += "<td><strong>" + escapeHtml(entry.name) + "</strong></td>";
       html += "<td>" + escapeHtml(entry.english || "-") + "</td>";
       html += "<td>" + badge(entry.domain) + "</td>";
       html += "<td>" + escapeHtml(entry.category || "-") + "</td>";
       html += "<td>" + escapeHtml(entry.shape || "-") + "</td>";
       html += "<td>" + (tags.length ? tags.slice(0, 5).map(function(tag) { return "<span class=\"badge\">" + escapeHtml(tag) + "</span>"; }).join(" ") : "<span class=\"muted\">无</span>") + "</td>";
+      html += '<td><button class="btn" style="min-height:30px;padding:4px 10px;font-size:12px;margin-right:6px" onclick="openEditModal(\'' + entry.id + '\')">编辑</button><button class="btn-danger" style="min-height:30px;padding:4px 10px;font-size:12px" onclick="deleteEntry(\'' + entry.id + '\')">删除</button></td>';
       html += "</tr>";
     });
     html += "</tbody></table>";
     $("entries-table").innerHTML = html;
   }).catch(function(error) {
     $("entries-table").innerHTML = "<div class=\"empty\">知识条目加载失败：" + escapeHtml(error.message) + "</div>";
-  });
+});
 }
 
 function loadModels() {
-  request("GET", "/api/draw/models").then(function(data) {
+request("GET", "/api/draw/models").then(function(data) {
     var select = $("draw-model-select");
     (data.models || []).forEach(function(model) {
       var option = document.createElement("option");
@@ -1214,6 +1327,8 @@ $("element-query").addEventListener("keydown", function(event) {
 });
 $("dify-test-btn").addEventListener("click", testDify);
 
+
+
 new MutationObserver(function() {
   scheduleEnhance(document);
 }).observe(document.querySelector(".main"), { childList: true, subtree: true });
@@ -1221,6 +1336,88 @@ new MutationObserver(function() {
 loadDashboard();
 loadModels();
 scheduleEnhance(document);
+
+function closeEditModal() {
+  var modal = $("edit-modal");
+  modal.classList.remove("open");
+  setTimeout(function() { modal.style.display = "none"; }, 250);
+}
+function saveEditEntry() {
+  var id = $("edit-id").value;
+  if (!id) return;
+  var tags = $("edit-tags").value.split(",").map(function(t) { return t.trim(); }).filter(function(t) { return t; });
+  var csStr = $("edit-color-scheme").value.trim();
+  var cs = [];
+  try { cs = JSON.parse(csStr); } catch(e) { cs = csStr ? [csStr] : []; }
+  var payload = {
+    name: $("edit-name").value.trim(),
+    english: $("edit-english").value.trim(),
+    domain: $("edit-domain").value,
+    category: $("edit-category").value.trim(),
+    shape: $("edit-shape").value.trim(),
+    color_scheme: cs,
+    tags: tags,
+    description: $("edit-description").value.trim()
+  };
+  request("PUT", "/api/entries/" + id, payload).then(function() {
+    toast("条目已更新");
+    closeEditModal();
+    loadEntries();
+  }).catch(function(error) {
+    toast("保存失败: " + error.message);
+  });
+}
 </script>
+<div id="edit-modal" class="modal-overlay" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="margin:0">编辑知识条目</h3>
+      <span class="modal-close" onclick="closeEditModal()" style="cursor:pointer;font-size:22px;color:#667085">&times;</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <label class="form-label">中文名称</label>
+      <input class="field" id="edit-name" placeholder="输入中文名称">
+      <label class="form-label" style="margin-top:10px">英文名称</label>
+      <input class="field" id="edit-english" placeholder="输入英文名称">
+      <div class="form-row" style="margin-top:10px">
+        <div>
+          <label class="form-label">学科</label>
+          <select class="field" id="edit-domain">
+            <option value="">未分类</option>
+            <option value="biology">生物</option>
+            <option value="chemistry">化学</option>
+            <option value="materials">材料</option>
+            <option value="environment">环境</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">类别</label>
+          <input class="field" id="edit-category" placeholder="如：细胞结构、分子">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div>
+          <label class="form-label">图元</label>
+          <input class="field" id="edit-shape" placeholder="如：circle, hexagon">
+        </div>
+        <div>
+          <label class="form-label">颜色方案</label>
+          <input class="field" id="edit-color-scheme" placeholder='["#xxx","#xxx"]'>
+        </div>
+      </div>
+      <label class="form-label" style="margin-top:10px">标签（逗号分隔）</label>
+      <input class="field" id="edit-tags" placeholder="如：细胞, 信号通路">
+      <label class="form-label" style="margin-top:10px">描述</label>
+      <textarea class="field" id="edit-description" rows="3" placeholder="可选描述"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" type="button" onclick="closeEditModal()">取消</button>
+      <button class="btn-primary" type="button" onclick="saveEditEntry()">保存修改</button>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>
