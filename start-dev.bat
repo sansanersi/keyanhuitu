@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 set "PYTHONPATH=%CD%\sci-illust-system\web_app;%CD%\sci-illust-system;%CD%"
-set "SCI_WEB_MODE=stable"
+set "SCI_WEB_MODE=dev"
 set "PYTHON_EXE="
 if exist "C:\Program Files\Python312\python.exe" set "PYTHON_EXE=C:\Program Files\Python312\python.exe"
 if not defined PYTHON_EXE (
@@ -16,5 +16,3 @@ for /f "delims=" %%P in ('powershell -NoProfile -Command "Get-CimInstance Win32_
   taskkill /PID %%P /F >nul 2>nul
 )
 "%PYTHON_EXE%" sci-illust-system\web_app\app.py
-
-

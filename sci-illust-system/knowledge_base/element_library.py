@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
 from .kb_core import DomainVocabulary
+import re
 
 class ElementTemplate:
     def __init__(self, name="", english_name="", domain="", category="", shape="",
@@ -18,6 +19,14 @@ class ElementTemplate:
                    tags=meta.get("tags", []), description=f"{meta.get('domain','')}/{meta.get('category','')} - {name}")
 
 class ElementLibrary:
+    TERM_ALIASES = {
+        "signaling": ["signal", "signals", "pathway", "cascade", "信号", "通路"],
+        "signal": ["signaling", "pathway", "信号", "通路"],
+        "egfr": ["receptor", "受体", "membrane"],
+        "egf": ["ligand", "配体"],
+        "ras": ["kinase", "激酶"],
+    }
+
     def __init__(self, vocabulary=None):
         self._templates = {}; self._domain_idx = {}; self._tag_idx = {}
         if vocabulary: self.build(vocabulary)
@@ -33,13 +42,35 @@ class ElementLibrary:
     def get(self, name):
         return self._templates.get(name)
     def suggest(self, text, top_k=5):
-        t = text.lower(); scored = []
+        query = str(text or "").strip().lower()
+        terms = [term for term in re.findall(r"[\w\u4e00-\u9fff]+", query) if len(term) > 1]
+        expanded_terms = []
+        for term in terms:
+            if term not in expanded_terms:
+                expanded_terms.append(term)
+            for alias in self.TERM_ALIASES.get(term, []):
+                if alias not in expanded_terms:
+                    expanded_terms.append(alias)
+        scored = []
         for n, tmp in self._templates.items():
             s = 0.0
-            if t in n.lower(): s += 3.0
-            if t in tmp.english_name.lower(): s += 2.0
+            name_l = n.lower()
+            english_l = tmp.english_name.lower()
+            category_l = tmp.category.lower()
+            desc_l = tmp.description.lower()
+            if query and query in name_l: s += 3.0
+            if query and query in english_l: s += 2.5
+            if query and query in category_l: s += 1.5
             for tag in tmp.tags:
-                if t in tag.lower(): s += 1.0
+                if query and query in tag.lower(): s += 1.0
+            for term in expanded_terms:
+                if term in name_l: s += 2.0
+                if term in english_l: s += 1.5
+                if term in category_l: s += 1.0
+                if term in desc_l: s += 0.5
+                for tag in tmp.tags:
+                    if term in tag.lower():
+                        s += 0.75
             if s > 0: scored.append((tmp, s))
         scored.sort(key=lambda x: x[1], reverse=True)
         return [x[0] for x in scored[:top_k]]

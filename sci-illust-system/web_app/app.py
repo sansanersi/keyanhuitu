@@ -92,9 +92,18 @@ def _get_ollama_models():
         return []
 
 
+def _web_mode():
+    return os.environ.get("SCI_WEB_MODE", "stable").strip().lower() or "stable"
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return ("", 204)
 
 
 @app.route("/api/dashboard")
@@ -244,11 +253,14 @@ def delete_document(did):
 @app.route("/api/ollama/status")
 def ollama_status():
     models = _get_ollama_models()
+    mode = _web_mode()
     return jsonify({
         "running": len(models) > 0,
         "models": models,
         "base_url": _ollama_base_url(),
         "default_model": _ollama_default_model(),
+        "web_mode": mode,
+        "server_label": "Flask 稳定服务" if mode == "stable" else "Flask 开发服务",
     })
 
 
@@ -440,6 +452,24 @@ def query_llm():
         return jsonify({"response": f"调用失败: {exc}", "source": "error"})
 
 
+def run_web_app():
+    host = "127.0.0.1"
+    port = 5000
+    mode = _web_mode()
+    print(f"Web service: http://{host}:{port} (mode={mode})")
+
+    if mode == "dev":
+        app.run(debug=True, host=host, port=port, use_reloader=True)
+        return
+
+    try:
+        from waitress import serve
+
+        serve(app, host=host, port=port)
+    except Exception:
+        app.run(debug=False, host=host, port=port, use_reloader=False)
+
+
 if __name__ == "__main__":
     print("启动: http://127.0.0.1:5000")
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    run_web_app()

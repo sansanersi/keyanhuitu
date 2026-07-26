@@ -252,6 +252,72 @@ button:active { transform: translateY(1px) scale(.985); }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.component-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(17, 31, 53, .98), rgba(10, 18, 31, .98));
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+.component-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent, #7ab2ff), transparent 75%);
+}
+.component-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.component-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.component-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(122, 178, 255, .16);
+  background: rgba(122, 178, 255, .08);
+  color: #cfe0ff;
+  font-size: 12px;
+}
+.component-state .dot {
+  width: 7px;
+  height: 7px;
+}
+.component-desc {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.component-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(34, 52, 79, .72);
+  color: var(--muted);
+  font-size: 12px;
+}
 .workflow-step {
   padding: 14px;
   border: 1px solid var(--line);
@@ -1075,13 +1141,18 @@ function animateNumber(element, target) {
 
 function enhanceMotion(scope) {
   var root = scope || document;
-  var motionTargets = root.querySelectorAll(".card, .workflow-step, .table-wrap, .preview, tbody tr");
+  var motionTargets = root.querySelectorAll(".card, .hero-panel, .source-panel, .component-card, .workflow-step, .table-wrap, .preview, tbody tr");
+  function revealNow(target) {
+    target.classList.add("is-visible");
+    if (revealObserver) {
+      try { revealObserver.unobserve(target); } catch (e) {}
+    }
+  }
   if (!revealObserver) {
     revealObserver = new IntersectionObserver(function(entries) {
       entries.forEach(function(entry) {
         if (entry.isIntersecting) {
-          entry.target.classList.add("is-visible");
-          revealObserver.unobserve(entry.target);
+          revealNow(entry.target);
         }
       });
     }, { threshold: 0.12, rootMargin: "0px 0px -36px 0px" });
@@ -1090,7 +1161,18 @@ function enhanceMotion(scope) {
     if (!target.classList.contains("reveal")) {
       target.classList.add("reveal");
       target.style.setProperty("--reveal-delay", Math.min(index * 36, 240) + "ms");
-      revealObserver.observe(target);
+    }
+    if (!target.classList.contains("is-visible")) {
+      if (!target.style.getPropertyValue("--reveal-delay")) {
+        target.style.setProperty("--reveal-delay", Math.min(index * 36, 240) + "ms");
+      }
+      var rect = target.getBoundingClientRect();
+      var inView = rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
+      if (inView) {
+        revealNow(target);
+      } else {
+        revealObserver.observe(target);
+      }
     }
   });
 
@@ -1099,6 +1181,19 @@ function enhanceMotion(scope) {
     if (value.dataset.animated || !/^\d+$/.test(text)) return;
     value.dataset.animated = "true";
     animateNumber(value, text);
+  });
+}
+
+function forceReveal(scope) {
+  var root = scope || document;
+  root.querySelectorAll(".card, .hero-panel, .source-panel, .component-card, .workflow-step, .table-wrap, .preview, tbody tr").forEach(function(target, index) {
+    if (!target.classList.contains("reveal")) {
+      target.classList.add("reveal");
+    }
+    if (!target.style.getPropertyValue("--reveal-delay")) {
+      target.style.setProperty("--reveal-delay", Math.min(index * 24, 160) + "ms");
+    }
+    target.classList.add("is-visible");
   });
 }
 
@@ -1188,7 +1283,7 @@ function loadDashboard() {
   request("GET", "/api/dashboard").then(function(data) {
     $("app-status").textContent = "领域 " + escapeHtml(domainLabel(data.focus_domain)) + "，文本语料 " + (data.corpus_documents || 0) + " 篇，Bioicons " + (data.bioicons_count || 0) + " 个";
     var html = "";
-    html += "<section class=\"hero-panel reveal\">";
+    html += "<section class=\"hero-panel\">";
     html += "<div class=\"hero-label\">专精领域科研绘图工作台</div>";
     html += "<div>";
     html += "<div class=\"hero-title\">" + escapeHtml(domainLabel(data.focus_domain)) + " 需求到图的组合引擎</div>";
@@ -1207,7 +1302,7 @@ function loadDashboard() {
     html += "</div>";
     html += "</section>";
 
-    html += "<aside class=\"source-panel reveal\">";
+    html += "<aside class=\"source-panel\">";
     html += "<div class=\"panel-block\">";
     html += "<div class=\"panel-block-title\"><h3>当前素材源</h3><span class=\"muted\">工作流会优先使用这些来源</span></div>";
     html += "<div class=\"source-list\">";
@@ -1225,7 +1320,7 @@ function loadDashboard() {
     html += "</div>";
     html += "</aside>";
 
-    html += "<section class=\"card surface metrics-panel reveal\" style=\"grid-column:1/-1\">";
+    html += "<section class=\"card surface metrics-panel\" style=\"grid-column:1/-1\">";
     html += "<div class=\"section-title\"><h3>工作台指标</h3><span class=\"muted\">文本、图元、模型、文档</span></div>";
     html += "<div class=\"grid stats-grid\">";
     html += "<div class=\"metric-tile\"><div class=\"metric-label\">知识条目</div><div class=\"metric-value\">" + data.entries + "</div><div class=\"metric-note\">领域条目总数</div></div>";
@@ -1234,7 +1329,18 @@ function loadDashboard() {
     html += "<div class=\"metric-tile\"><div class=\"metric-label\">已向量化</div><div class=\"metric-value\">" + (data.vectorized_documents || 0) + "</div><div class=\"metric-note\">可参与检索的文档</div></div>";
     html += "</div></section>";
 
-    html += "<section class=\"card surface workflow-panel reveal\" style=\"grid-column:1/-1\">";
+    html += "<section class=\"card surface\" style=\"grid-column:1/-1\">";
+    html += "<div class=\"section-title\"><h3>仪表盘组件</h3><span class=\"muted\">把需求、语料、素材、布局拆成独立模块</span></div>";
+    html += "<div class=\"component-grid\">";
+    html += "<div class=\"component-card\" style=\"--accent:#58d5ff\"><div class=\"component-head\"><div class=\"component-name\">需求解析</div><span class=\"component-state\"><span class=\"dot\"></span>运行中</span></div><div class=\"component-desc\">解析客户描述，提取领域、图类型、核心实体和关系，作为后续绘图的输入。</div><div class=\"component-foot\"><span>输入</span><strong>自然语言</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#43d4b1\"><div class=\"component-head\"><div class=\"component-name\">文本语料</div><span class=\"component-state\"><span class=\"dot\"></span>已连接</span></div><div class=\"component-desc\">来自专精领域的论文、图注、术语和本地资料，用于补充生成上下文。</div><div class=\"component-foot\"><span>语料</span><strong>" + escapeHtml(String(data.corpus_documents || 0)) + " 篇</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#f6b66f\"><div class=\"component-head\"><div class=\"component-name\">图像素材</div><span class=\"component-state\"><span class=\"dot\"></span>可用</span></div><div class=\"component-desc\">Bioicons SVG 与本地图元库，用来把术语映射成可直接绘制的视觉对象。</div><div class=\"component-foot\"><span>素材</span><strong>" + escapeHtml(String(data.bioicons_count || 0)) + " 个</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#7ab2ff\"><div class=\"component-head\"><div class=\"component-name\">布局引擎</div><span class=\"component-state\"><span class=\"dot\"></span>在线</span></div><div class=\"component-desc\">负责将组件、箭头和标签自动排布成可读的科研示意图，而不是单纯堆文本。</div><div class=\"component-foot\"><span>输出</span><strong>SVG</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#a88cff\"><div class=\"component-head\"><div class=\"component-name\">渲染器</div><span class=\"component-state\"><span class=\"dot\"></span>就绪</span></div><div class=\"component-desc\">将布局结果转换为可下载、可编辑的最终图稿，支持组件图和知识图双路径。</div><div class=\"component-foot\"><span>格式</span><strong>矢量图</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#ffb0b0\"><div class=\"component-head\"><div class=\"component-name\">导出层</div><span class=\"component-state\"><span class=\"dot\"></span>可下载</span></div><div class=\"component-desc\">把完成的图稿导出为 SVG，便于后续在论文、汇报和海报中继续编辑。</div><div class=\"component-foot\"><span>交付</span><strong>下载 SVG</strong></div></div>";
+    html += "</div></section>";
+
+    html += "<section class=\"card surface workflow-panel\" style=\"grid-column:1/-1\">";
     html += "<div class=\"section-title\"><h3>绘图链路</h3><span class=\"muted\">需求 -> 语料 -> 素材 -> 布局 -> SVG</span></div>";
     html += "<div class=\"workflow-grid\">";
     html += "<div class=\"workflow-step\"><strong>需求解析</strong><span>从客户描述中抽取领域、图类型和核心实体。</span></div>";
@@ -1244,8 +1350,11 @@ function loadDashboard() {
     html += "</div></section>";
 
     $("dashboard-content").innerHTML = html;
+    forceReveal($("dashboard-content"));
+    scheduleEnhance($("dashboard-content"));
   }).catch(function(error) {
     $("dashboard-content").innerHTML = "<div class=\"card empty\">仪表盘加载失败：" + escapeHtml(error.message) + "</div>";
+    forceReveal($("dashboard-content"));
   });
 }
 
@@ -1354,7 +1463,7 @@ function generateDrawing() {
   var button = $("draw-submit");
   button.disabled = true;
   button.textContent = "生成中";
-  $("draw-summary").textContent = "正在分析需求并生成 SVG";
+  $("draw-summary").textContent = selectedModel ? "正在调用本地模型生成 SVG，通常需要 30 到 60 秒" : "正在分析需求并生成 SVG";
   $("svg-preview").innerHTML = "<div class=\"empty\"><strong>正在生成</strong><span>系统正在检索知识库并组装 SVG，请稍候。</span></div>";
   request("POST", "/api/draw", payload).then(function(data) {
     if (!data.success) throw new Error(data.error || "生成失败");
@@ -1538,7 +1647,7 @@ function loadSettings() {
     html += "<div class=\"status-tile\"><div class=\"metric-label\">Ollama 状态</div><div class=\"metric-value\">" + (data.running ? "运行中" : "未运行") + "</div><div class=\"metric-note\">" + escapeHtml(data.base_url || "127.0.0.1:11434") + "</div></div>";
     html += "<div class=\"status-tile\"><div class=\"metric-label\">本地模型</div><div class=\"metric-value\">" + models.length + "</div><div class=\"metric-note\">" + escapeHtml(models.join(", ") || "暂无模型") + "</div></div>";
     html += "<div class=\"status-tile\"><div class=\"metric-label\">默认模型</div><div class=\"metric-value\">" + escapeHtml(data.default_model || "qwen3.5:4b") + "</div><div class=\"metric-note\">下次绘图会优先使用这个模型</div></div>";
-    html += "<div class=\"status-tile\"><div class=\"metric-label\">Web 服务</div><div class=\"metric-value\">运行中</div><div class=\"metric-note\">Flask 开发服务</div></div>";
+    html += "<div class=\"status-tile\"><div class=\"metric-label\">Web 服务</div><div class=\"metric-value\">运行中</div><div class=\"metric-note\">" + escapeHtml(data.server_label || "Flask Web 服务") + "</div></div>";
     html += "</div>";
     $("settings-content").className = "status-grid";
     $("settings-content").innerHTML = html;
