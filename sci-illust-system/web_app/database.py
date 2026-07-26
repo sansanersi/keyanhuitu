@@ -1,5 +1,6 @@
 
 import json, os, sqlite3
+from contextlib import closing
 from typing import Dict, List
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "knowledge.db")
@@ -11,7 +12,7 @@ class KnowledgeDatabase:
         self._init_db()
 
     def _init_db(self):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS entries (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,14 +34,16 @@ class KnowledgeDatabase:
                     key TEXT PRIMARY KEY, value TEXT NOT NULL
                 );
             """)
+            conn.commit()
 
     def add_entry(self, name, english="", domain="", category="", shape="", color_scheme=None, tags=None, description=""):
         cs = json.dumps(color_scheme or [])
         tg = json.dumps(tags or [])
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             try:
                 conn.execute("INSERT INTO entries (name, english, domain, category, shape, color_scheme, tags, description) VALUES (?,?,?,?,?,?,?,?)",
                              (name, english, domain, category, shape, cs, tg, description))
+                conn.commit()
                 return True
             except sqlite3.IntegrityError:
                 return False
@@ -53,15 +56,17 @@ class KnowledgeDatabase:
             fields.append(k + "=?")
             values.append(v)
         values.append(eid)
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("UPDATE entries SET " + ", ".join(fields) + ", updated_at=CURRENT_TIMESTAMP WHERE id=?", values)
+            conn.commit()
 
     def delete_entry(self, eid):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("DELETE FROM entries WHERE id=?", (eid,))
+            conn.commit()
 
     def list_entries(self, domain="", search="", limit=100, offset=0):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.row_factory = sqlite3.Row
             where, params = [], []
             if domain:
@@ -77,27 +82,52 @@ class KnowledgeDatabase:
             return [dict(r) for r in rows], total
 
     def add_document(self, filename, filepath, file_type="", content=""):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("INSERT INTO documents (filename, filepath, file_type, content) VALUES (?,?,?,?)", (filename, filepath, file_type, content))
+            conn.commit()
             return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
     def update_document_vector(self, did, content, vectorized=1):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("UPDATE documents SET content=?, vectorized=? WHERE id=?", (content, vectorized, did))
+            conn.commit()
 
     def list_documents(self):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute("SELECT * FROM documents ORDER BY created_at DESC").fetchall()
             return [dict(r) for r in rows]
 
     def delete_document(self, did):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("DELETE FROM documents WHERE id=?", (did,))
+            conn.commit()
+
+    def get_setting(self, key, default=""):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+            return row[0] if row else default
+
+    def set_setting(self, key, value):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            conn.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, str(value)),
+            )
+            conn.commit()
+
+    def list_settings(self, prefix=""):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            if prefix:
+                rows = conn.execute("SELECT * FROM settings WHERE key LIKE ? ORDER BY key", (prefix + "%",)).fetchall()
+            else:
+                rows = conn.execute("SELECT * FROM settings ORDER BY key").fetchall()
+            return {row["key"]: row["value"] for row in rows}
 
     @property
     def stats(self):
-        with sqlite3.connect(self.db_path) as conn:
+        with closing(sqlite3.connect(self.db_path)) as conn:
             e = conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
             d = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
             v = conn.execute("SELECT COUNT(*) FROM documents WHERE vectorized=1").fetchone()[0]

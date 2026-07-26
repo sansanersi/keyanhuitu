@@ -641,7 +641,6 @@ to { opacity: 1; transform: translateY(0) scale(1); }
       <button class="nav-item" data-page="documents" type="button">文档管理</button>
       <button class="nav-item" data-page="search" type="button">知识检索</button>
       <button class="nav-item" data-page="elements" type="button">元素库</button>
-      <button class="nav-item" data-page="dify" type="button">Dify 集成</button>
       <button class="nav-item" data-page="settings" type="button">设置</button>
     </nav>
   </aside>
@@ -799,30 +798,27 @@ to { opacity: 1; transform: translateY(0) scale(1); }
       </div>
     </section>
 
-    <section id="page-dify" class="page">
+    <section id="page-settings" class="page">
       <div class="card surface">
         <div class="section-title">
-          <h3>Dify 集成</h3>
-          <span class="muted">配置外部 LLM 工作流</span>
+          <h3>Ollama 记忆</h3>
+          <span class="muted">本地服务地址与默认模型</span>
         </div>
         <div class="form-row">
           <div>
-            <label class="form-label" for="dify-url">API 地址</label>
-            <input class="field" id="dify-url" placeholder="http://localhost:8080/api">
+            <label class="form-label" for="ollama-url">Ollama 地址</label>
+            <input class="field" id="ollama-url" placeholder="http://127.0.0.1:11434">
           </div>
           <div>
-            <label class="form-label" for="dify-key">API Key</label>
-            <input class="field" id="dify-key" placeholder="请输入 Dify API Key">
+            <label class="form-label" for="ollama-model">默认模型</label>
+            <input class="field" id="ollama-model" placeholder="qwen3.5:4b">
           </div>
         </div>
         <div class="toolbar" style="margin:12px 0 0">
-          <button class="btn-primary" type="button" id="dify-test-btn">测试连接</button>
-          <span class="muted" id="dify-status-text">尚未测试</span>
+          <button class="btn-primary" type="button" id="ollama-save-btn">保存 Ollama 设置</button>
+          <span class="muted" id="ollama-status-text">尚未加载</span>
         </div>
       </div>
-    </section>
-
-    <section id="page-settings" class="page">
       <div class="card surface">
         <div class="section-title">
           <h3>设置</h3>
@@ -844,7 +840,6 @@ var pageTitles = {
   documents: "文档管理",
   search: "知识检索",
   elements: "元素库",
-  dify: "Dify 集成",
   settings: "设置"
 };
 var revealObserver = null;
@@ -1008,14 +1003,15 @@ function deleteEntry(id) {
 
 function loadDashboard() {
   request("GET", "/api/dashboard").then(function(data) {
-    $("app-status").textContent = "知识库 " + data.entries + " 条，Ollama 模型 " + (data.ollama_models || []).length + " 个";
+    $("app-status").textContent = "知识库 " + data.entries + " 条，Ollama 模型 " + (data.ollama_models || []).length + " 个，Bioicons " + (data.bioicons_count || 0) + " 个";
     var cards = [
       ["知识条目", data.entries],
       ["内置术语", data.kb_terms],
       ["向量索引", data.kb_vectors],
       ["文档数量", data.documents],
       ["已向量化文档", data.vectorized_documents || 0],
-      ["Ollama 模型", (data.ollama_models || []).length]
+      ["Ollama 模型", (data.ollama_models || []).length],
+      ["Bioicons", data.bioicons_count || 0]
     ];
     var html = cards.map(function(item) {
       return "<div class=\"card compact surface\"><div class=\"metric-label\">" + item[0] + "</div><div class=\"metric-value\">" + item[1] + "</div><div class=\"metric-note\">当前工作区</div></div>";
@@ -1076,14 +1072,37 @@ var html = "<table><thead><tr><th>名称</th><th>英文名</th><th>学科</th><t
 function loadModels() {
 request("GET", "/api/draw/models").then(function(data) {
     var select = $("draw-model-select");
-    (data.models || []).forEach(function(model) {
+    var models = data.models || [];
+    var remembered = localStorage.getItem("sci_ollama_model") || data.default_model || "";
+    select.innerHTML = "<option value=\"\">关键词/知识库</option>";
+    models.forEach(function(model) {
       var option = document.createElement("option");
       option.value = model;
       option.textContent = model;
       select.appendChild(option);
     });
+    if (remembered && models.indexOf(remembered) === -1) {
+      var option = document.createElement("option");
+      option.value = remembered;
+      option.textContent = "上次使用: " + remembered;
+      select.appendChild(option);
+    }
+    select.value = remembered;
   }).catch(function() {
     $("draw-model-select").innerHTML = "<option value=\"\">关键词/知识库</option>";
+  });
+}
+
+function loadOllamaConfig() {
+  request("GET", "/api/ollama/config").then(function(data) {
+    $("ollama-url").value = data.base_url || "http://127.0.0.1:11434";
+    $("ollama-model").value = data.default_model || "";
+    $("ollama-status-text").textContent = "已加载配置";
+    if (!$("draw-model-select").value && data.default_model) {
+      $("draw-model-select").value = data.default_model;
+    }
+  }).catch(function(error) {
+    $("ollama-status-text").textContent = "加载失败：" + error.message;
   });
 }
 
@@ -1114,6 +1133,10 @@ function generateDrawing() {
     canvas_width: parseInt(size[0], 10),
     canvas_height: parseInt(size[1], 10)
   };
+  var selectedModel = $("draw-model-select").value.trim();
+  if (selectedModel) {
+    localStorage.setItem("sci_ollama_model", selectedModel);
+  }
   var button = $("draw-submit");
   button.disabled = true;
   button.textContent = "生成中";
@@ -1135,6 +1158,22 @@ function generateDrawing() {
   }).finally(function() {
     button.disabled = false;
     button.textContent = "生成配图";
+  });
+}
+
+function saveOllamaConfig() {
+  request("POST", "/api/ollama/config", {
+    base_url: $("ollama-url").value.trim(),
+    default_model: $("ollama-model").value.trim()
+  }).then(function(data) {
+    $("ollama-status-text").textContent = data.success ? "配置已保存" : "保存失败";
+    if (data.default_model) {
+      $("draw-model-select").value = data.default_model;
+      localStorage.setItem("sci_ollama_model", data.default_model);
+    }
+    loadModels();
+  }).catch(function(error) {
+    $("ollama-status-text").textContent = "保存失败：" + error.message;
   });
 }
 
@@ -1266,22 +1305,12 @@ function loadElements() {
       return;
     }
     $("elements-results").innerHTML = elements.map(function(item) {
-      return "<div class=\"card compact surface\"><div class=\"metric-label\">" + escapeHtml(item.domain || "元素") + "</div><div style=\"font-weight:700;margin-bottom:6px\">" + escapeHtml(item.name) + "</div><div class=\"muted\">" + escapeHtml(item.english_name || item.english || "") + "</div></div>";
+      var source = item.source === "bioicons" ? "Bioicons" : "知识库";
+      var detail = item.description || item.english_name || item.english || "";
+      return "<div class=\"card compact surface\"><div class=\"metric-label\">" + escapeHtml(source + " · " + (item.domain || "元素")) + "</div><div style=\"font-weight:700;margin-bottom:6px\">" + escapeHtml(item.name) + "</div><div class=\"muted\">" + escapeHtml(detail) + "</div></div>";
     }).join("");
   }).catch(function(error) {
     $("elements-results").innerHTML = "<div class=\"card empty\">元素推荐失败：" + escapeHtml(error.message) + "</div>";
-  });
-}
-
-function testDify() {
-  $("dify-status-text").textContent = "正在测试连接";
-  request("POST", "/api/dify/configure", {
-    base_url: $("dify-url").value.trim(),
-    api_key: $("dify-key").value.trim()
-  }).then(function(data) {
-    $("dify-status-text").textContent = data.status === "ok" ? "连接成功" : "连接失败：" + (data.message || data.status);
-  }).catch(function(error) {
-    $("dify-status-text").textContent = "连接失败：" + error.message;
   });
 }
 
@@ -1290,13 +1319,15 @@ function loadSettings() {
   request("GET", "/api/ollama/status").then(function(data) {
     var models = data.models || [];
     var html = "";
-    html += "<div class=\"card compact surface\"><div class=\"metric-label\">Ollama 状态</div><div class=\"metric-value\">" + (data.running ? "运行中" : "未运行") + "</div><div class=\"metric-note\">127.0.0.1:11434</div></div>";
+    html += "<div class=\"card compact surface\"><div class=\"metric-label\">Ollama 状态</div><div class=\"metric-value\">" + (data.running ? "运行中" : "未运行") + "</div><div class=\"metric-note\">" + escapeHtml(data.base_url || "127.0.0.1:11434") + "</div></div>";
     html += "<div class=\"card compact surface\"><div class=\"metric-label\">本地模型</div><div class=\"metric-value\">" + models.length + "</div><div class=\"metric-note\">" + escapeHtml(models.join(", ") || "暂无模型") + "</div></div>";
+    html += "<div class=\"card compact surface\"><div class=\"metric-label\">默认模型</div><div class=\"metric-value\">" + escapeHtml(data.default_model || "qwen3.5:4b") + "</div><div class=\"metric-note\">下次绘图会优先使用这个模型</div></div>";
     html += "<div class=\"card compact surface\"><div class=\"metric-label\">Web 服务</div><div class=\"metric-value\">运行中</div><div class=\"metric-note\">Flask 开发服务</div></div>";
     $("settings-content").innerHTML = html;
   }).catch(function(error) {
     $("settings-content").innerHTML = "<div class=\"card empty\">设置加载失败：" + escapeHtml(error.message) + "</div>";
   });
+  loadOllamaConfig();
 }
 
 document.querySelectorAll(".nav-item").forEach(function(item) {
@@ -1315,6 +1346,14 @@ $("draw-submit").addEventListener("click", generateDrawing);
 $("draw-example").addEventListener("click", function() {
   $("draw-input").value = "EGF 配体结合 EGFR 受体，激活 RAS 激酶，并将信号传递到细胞核，引发基因转录。";
 });
+$("draw-model-select").addEventListener("change", function() {
+  var model = this.value.trim();
+  if (model) {
+    localStorage.setItem("sci_ollama_model", model);
+    $("ollama-model").value = model;
+    request("POST", "/api/ollama/config", { default_model: model }).catch(function() {});
+  }
+});
 $("download-svg").addEventListener("click", downloadSvg);
 $("doc-upload-btn").addEventListener("click", uploadDocument);
 $("search-btn").addEventListener("click", doSearch);
@@ -1325,7 +1364,7 @@ $("element-btn").addEventListener("click", loadElements);
 $("element-query").addEventListener("keydown", function(event) {
   if (event.key === "Enter") loadElements();
 });
-$("dify-test-btn").addEventListener("click", testDify);
+$("ollama-save-btn").addEventListener("click", saveOllamaConfig);
 
 
 
@@ -1335,6 +1374,7 @@ new MutationObserver(function() {
 
 loadDashboard();
 loadModels();
+loadOllamaConfig();
 scheduleEnhance(document);
 
 function closeEditModal() {

@@ -1,5 +1,7 @@
+import json
 import os
 import sys
+import tempfile
 import unittest
 
 
@@ -10,6 +12,7 @@ if SYSTEM_DIR not in sys.path:
 
 from orchestrator.component_planner import ComponentPlanner
 from orchestrator.pipeline import SciIllustPipeline
+from knowledge_base.bioicons_library import BioiconsLibrary
 from drawing.component_composer import ComponentComposer
 from drawing.layout_engine import LayoutEdge, LayoutEngine, LayoutNode, LayoutType
 
@@ -23,6 +26,25 @@ class FakeClient:
 
 
 class ComponentCompositionTest(unittest.TestCase):
+    def _build_bioicon_fixture(self, root_dir):
+        icons_dir = os.path.join(root_dir, "static", "icons")
+        target_dir = os.path.join(icons_dir, "cc-by-4.0", "Cell_culture", "DBCLS")
+        os.makedirs(target_dir, exist_ok=True)
+        with open(os.path.join(icons_dir, "icons.json"), "w", encoding="utf-8") as f:
+            json.dump(
+                [
+                    {
+                        "name": "2-cell_embryo",
+                        "category": "Cell_culture",
+                        "license": "cc-by-4.0",
+                        "author": "DBCLS",
+                    }
+                ],
+                f,
+            )
+        with open(os.path.join(target_dir, "2-cell_embryo.svg"), "w", encoding="utf-8") as f:
+            f.write('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><circle cx="36" cy="36" r="28"/></svg>')
+
     def test_planner_parses_model_json_contract(self):
         response = """
         {
@@ -95,6 +117,31 @@ class ComponentCompositionTest(unittest.TestCase):
         self.assertIn('class="component-title"', svg)
         self.assertIn('marker-end="url(#component-arrow)"', svg)
         self.assertIn("结合", svg)
+
+    def test_component_composer_embeds_bioicon_svg_assets(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._build_bioicon_fixture(tmpdir)
+            planner = ComponentPlanner(bioicons=BioiconsLibrary(tmpdir), llm_client=FakeClient(
+                """
+                {
+                  "title": "Embryo",
+                  "layout": "hierarchical",
+                  "style": "science",
+                  "components": [
+                    {"id": "embryo", "name": "2-cell_embryo", "type": "image_text", "image_key": "process", "caption": "早期胚胎"}
+                  ],
+                  "connections": []
+                }
+                """
+            ))
+
+            plan = planner.plan("2-cell embryo", model="qwen3.5:4b")
+            svg = ComponentComposer().render(plan, width=900, height=600)
+
+            self.assertIn('class="bioicon-art"', svg)
+            self.assertIn("data:image/svg+xml;base64", svg)
+            self.assertEqual(plan["components"][0]["asset_source"], "bioicons")
+            self.assertTrue(plan["components"][0]["svg_path"].endswith("2-cell_embryo.svg"))
 
     def test_component_composer_wraps_dense_hierarchical_components(self):
         plan = {

@@ -8,7 +8,7 @@ except ImportError:
 
 class OllamaClient:
     def __init__(self, base_url="http://127.0.0.1:11434", default_model="qwen3.5:4b", timeout=120):
-        self.base_url = base_url.rstrip("/"); self.default_model = default_model; self.timeout = timeout
+        self.base_url = self._normalize_base_url(base_url); self.default_model = default_model; self.timeout = timeout
         self._available_models = []; self._refresh()
 
     def _req(self, method, path, data=None):
@@ -62,3 +62,11 @@ class OllamaClient:
         if system: msgs.append({"role":"system","content":system})
         msgs.append({"role":"user","content":prompt})
         return self.chat(msgs, model, temperature, max_tokens)
+
+    def _normalize_base_url(self, base_url):
+        url = (base_url or "").strip().rstrip("/")
+        if url.endswith("/api"):
+            return url[:-4]
+        if url.endswith("/v1"):
+            return url[:-3]
+        return url or "http://127.0.0.1:11434"

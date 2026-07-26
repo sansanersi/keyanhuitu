@@ -143,7 +143,6 @@ print('SVG 已生成')
 | Web 管理界面 | `web_app/` | Flask + 单页应用 |
 | 文档上传自动向量化 | `web_app/` | 自动提取术语入知识库 |
 | SQLite 数据库 CRUD | `web_app/database.py` | 手动编辑知识条目 |
-| Dify API 桥接 | `web_app/dify_bridge.py` | 将 Dify 作为 LLM 后端 |
 
 ---
 
@@ -165,7 +164,6 @@ python sci-illust-system\web_app\app.py
 - 📄 文档管理 — 上传文档自动向量化
 - 🔍 知识检索 — RAG 搜索 + LLM 分析
 - 🎨 元素库 — 浏览可绘制元素
-- 🔗 Dify 集成 — 配置 Dify API
 - ⚙️ 设置 — Ollama 状态等
 
 ### 5.2 Python API
@@ -231,42 +229,7 @@ sci-illust-system/web_app/data/uploads/      ← 上传文档存储
 
 ---
 
-## 7. Dify 集成
-
-### 7.1 配置 Dify
-
-1. 打开 Web 界面 → Dify 集成
-2. 填写 Dify API 地址（如 `http://localhost:8080/api`）
-3. 填写 API Key
-4. 点击 "测试连接"
-
-### 7.2 将知识库作为 Dify 工具
-
-在 Dify 中创建自定义工具，填入以下配置:
-
-```json
-{
-  "name": "sci_illust_knowledge",
-  "openapi": {
-    "info": {"title": "科研配图知识库", "version": "1.0.0"},
-    "paths": {
-      "/api/search": {
-        "get": {
-          "summary": "检索科研配图知识库",
-          "parameters": [
-            {"name": "q", "in": "query", "required": true, "schema": {"type": "string"}}
-          ],
-          "responses": {"200": {"description": "匹配的术语列表"}}
-        }
-      }
-    }
-  }
-}
-```
-
----
-
-## 8. 模型选择建议
+## 7. 模型选择建议
 
 | 模型 | 大小 | 速度 | 适用场景 |
 |------|------|------|----------|
@@ -277,7 +240,7 @@ sci-illust-system/web_app/data/uploads/      ← 上传文档存储
 
 ---
 
-## 9. 常见问题
+## 8. 常见问题
 
 ### Q: Ollama 启动报 "Access is denied"
 
@@ -304,7 +267,7 @@ qwen3.5 是 reasoning 模型，响应在 `thinking` 字段。系统已自动处�
 
 ---
 
-## 10. 文件索引
+## 9. 文件索引
 
 | 文件 | 用途 |
 |------|------|
@@ -323,7 +286,6 @@ qwen3.5 是 reasoning 模型，响应在 `thinking` 字段。系统已自动处�
 | `sci-illust-system/ollama_integration/server_manager.py` | Ollama服务管理 |
 | `sci-illust-system/web_app/app.py` | Flask 管理后端 |
 | `sci-illust-system/web_app/database.py` | SQLite 数据库 |
-| `sci-illust-system/web_app/dify_bridge.py` | Dify API桥接 |
 | `sci-illust-system/web_app/document_processor.py` | 文档向量化 |
 | `sci-illust-system/web_app/templates/index.html` | 前端管理界面 |
 

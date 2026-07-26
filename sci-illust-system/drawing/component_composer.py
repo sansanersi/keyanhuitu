@@ -1,3 +1,5 @@
+import base64
+import os
 from html import escape
 
 from drawing.element_gen import SVGElementGenerator
@@ -196,14 +198,16 @@ class ComponentComposer:
         y = component["y"]
         width = component["width"]
         height = component["height"]
+        svg_path = component.get("svg_path", "")
         visual_size = min(58, max(42, height - 52))
         visual_x = (width - visual_size) / 2
         visual_y = 14
-        visual = self.element_gen.generate(
+        visual = self._render_visual(
             component.get("name", ""),
             shape,
             colors,
-            {"width": visual_size, "height": visual_size},
+            visual_size,
+            svg_path=svg_path,
         )
         title = self._clip(component.get("name", ""), 16)
         caption = self._clip(component.get("caption", ""), 22)
@@ -242,6 +246,31 @@ class ComponentComposer:
             + escape(caption)
             + "</text>"
             + "</g>"
+        )
+
+    def _render_visual(self, name, shape, colors, size, svg_path=""):
+        if svg_path and os.path.isfile(svg_path):
+            try:
+                with open(svg_path, "r", encoding="utf-8") as f:
+                    svg_text = f.read().strip()
+                if svg_text:
+                    encoded = base64.b64encode(svg_text.encode("utf-8")).decode("ascii")
+                    return (
+                        "<image class=\"bioicon-art\" x=\"0\" y=\"0\" width=\""
+                        + self._num(size)
+                        + "\" height=\""
+                        + self._num(size)
+                        + "\" preserveAspectRatio=\"xMidYMid meet\" href=\"data:image/svg+xml;base64,"
+                        + encoded
+                        + "\"/>"
+                    )
+            except Exception:
+                pass
+        return self.element_gen.generate(
+            name,
+            shape,
+            colors,
+            {"width": size, "height": size},
         )
 
     def _clip(self, text, limit):

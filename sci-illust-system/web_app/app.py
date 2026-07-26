@@ -15,8 +15,8 @@ for path in [os.path.dirname(BASE_DIR), os.path.dirname(os.path.dirname(BASE_DIR
 from flask import Flask, jsonify, render_template, request
 
 from database import KnowledgeDatabase
-from dify_bridge import DifyBridge
 from document_processor import DocumentProcessor
+from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
 
@@ -30,7 +30,7 @@ kb = KnowledgeBase(
 el = ElementLibrary(kb.vocabulary)
 db = KnowledgeDatabase()
 dp = DocumentProcessor()
-dify = DifyBridge()
+bioicons = BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main"))
 
 
 def import_builtin():
@@ -54,11 +54,32 @@ def import_builtin():
 import_builtin()
 
 
+def _ollama_base_url():
+    return db.get_setting("ollama_base_url", "http://127.0.0.1:11434")
+
+
+def _ollama_default_model():
+    return db.get_setting("ollama_default_model", "qwen3.5:4b")
+
+
+def _ollama_client(timeout=5):
+    from ollama_integration.ollama_client import OllamaClient
+
+    return OllamaClient(base_url=_ollama_base_url(), default_model=_ollama_default_model(), timeout=timeout)
+
+
+def _normalize_ollama_base_url(base_url):
+    url = (base_url or "").strip().rstrip("/")
+    if url.endswith("/api"):
+        return url[:-4]
+    if url.endswith("/v1"):
+        return url[:-3]
+    return url or "http://127.0.0.1:11434"
+
+
 def _get_ollama_models():
     try:
-        from ollama_integration.ollama_client import OllamaClient
-
-        return OllamaClient(timeout=5).list_models()
+        return _ollama_client(timeout=5).list_models()
     except Exception:
         return []
 
@@ -78,8 +99,9 @@ def dashboard():
         "domains": stats["domains"],
         "kb_terms": kb.stats["total_terms"],
         "kb_vectors": kb.stats["vector_index_size"],
+        "bioicons_available": bioicons.available,
+        "bioicons_count": bioicons.count,
         "ollama_models": _get_ollama_models(),
-        "dify_configured": dify.is_configured,
     })
 
 
@@ -124,8 +146,53 @@ def search_kb():
 
 @app.route("/api/elements/suggest")
 def suggest_elements():
-    items = el.suggest(request.args.get("text", ""), top_k=8)
-    return jsonify({"elements": [item.to_dict() for item in items]})
+    text = request.args.get("text", "")
+    kb_items = []
+    for item in el.suggest(text, top_k=8):
+        data = item.to_dict()
+        data["source"] = "knowledge_base"
+        kb_items.append(data)
+
+    bioicon_items = []
+    for item in bioicons.suggest(text, top_k=8):
+        bioicon_items.append({
+            "name": item.get("name", ""),
+            "english_name": item.get("english_name", ""),
+            "domain": item.get("domain", "bioicons"),
+            "category": item.get("category", ""),
+            "shape": item.get("shape", "icon"),
+            "color_scheme": item.get("color_scheme", ["#4A90D9"]),
+            "description": item.get("description", ""),
+            "type": item.get("type", "bioicon"),
+            "tags": item.get("tags", []),
+            "score": item.get("score", 0),
+            "source": "bioicons",
+            "license": item.get("license", ""),
+            "author": item.get("author", ""),
+            "svg_path": item.get("svg_path", ""),
+        })
+
+    merged = []
+    seen = set()
+    for item in kb_items + bioicon_items:
+        key = (item.get("name", "").lower(), item.get("source", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(item)
+    return jsonify({"elements": merged})
+
+
+@app.route("/api/bioicons/status")
+def bioicons_status():
+    return jsonify(bioicons.stats())
+
+
+@app.route("/api/bioicons/suggest")
+def suggest_bioicons():
+    text = request.args.get("text", "")
+    top_k = int(request.args.get("top_k", 8))
+    return jsonify({"icons": bioicons.suggest(text, top_k=top_k), "stats": bioicons.stats()})
 
 
 @app.route("/api/document/upload", methods=["POST"])
@@ -153,29 +220,48 @@ def delete_document(did):
     return jsonify({"success": True})
 
 
-@app.route("/api/dify/status")
-def dify_status():
-    return jsonify(dify.test_connection())
-
-
-@app.route("/api/dify/configure", methods=["POST"])
-def dify_configure():
-    global dify
-
-    data = request.json or {}
-    dify = DifyBridge(api_key=data.get("api_key"), base_url=data.get("base_url"))
-    return jsonify(dify.test_connection())
-
-
 @app.route("/api/ollama/status")
 def ollama_status():
     models = _get_ollama_models()
-    return jsonify({"running": len(models) > 0, "models": models})
+    return jsonify({
+        "running": len(models) > 0,
+        "models": models,
+        "base_url": _ollama_base_url(),
+        "default_model": _ollama_default_model(),
+    })
+
+
+@app.route("/api/ollama/config", methods=["GET", "POST"])
+def ollama_config():
+    if request.method == "GET":
+        return jsonify({
+            "base_url": _ollama_base_url(),
+            "default_model": _ollama_default_model(),
+            "models": _get_ollama_models(),
+        })
+
+    data = request.json or {}
+    base_url = _normalize_ollama_base_url(data.get("base_url", ""))
+    default_model = data.get("default_model", "").strip()
+    if base_url:
+        db.set_setting("ollama_base_url", base_url)
+    if default_model:
+        db.set_setting("ollama_default_model", default_model)
+    return jsonify({
+        "success": True,
+        "base_url": _ollama_base_url(),
+        "default_model": _ollama_default_model(),
+        "models": _get_ollama_models(),
+    })
 
 
 @app.route("/api/draw/models")
 def draw_models():
-    return jsonify({"models": _get_ollama_models()})
+    return jsonify({
+        "models": _get_ollama_models(),
+        "default_model": _ollama_default_model(),
+        "base_url": _ollama_base_url(),
+    })
 
 
 @app.route("/api/draw/shapes")
@@ -316,21 +402,17 @@ def draw():
 def query_llm():
     data = request.json or {}
     text = data.get("text", "")
-    if data.get("use_dify") and dify.is_configured:
-        response = dify.chat(text)
-        if response:
-            return jsonify({"response": response, "source": "dify"})
 
     try:
         from ollama_integration.ollama_client import OllamaClient
 
-        client = OllamaClient(timeout=60)
+        client = OllamaClient(base_url=_ollama_base_url(), default_model=_ollama_default_model(), timeout=60)
         response = client.chat(
             [
                 {"role": "system", "content": "你是科研绘图专家。"},
                 {"role": "user", "content": text},
             ],
-            model=data.get("model", "qwen3.5:4b"),
+            model=data.get("model", "") or _ollama_default_model(),
         )
         return jsonify({"response": response or "模型无响应", "source": "ollama"})
     except Exception as exc:

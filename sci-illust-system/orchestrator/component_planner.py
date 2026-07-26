@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 from knowledge_base.kb_core import KnowledgeBase
@@ -6,9 +7,10 @@ from orchestrator.text_analyzer import RequirementAnalyzer
 
 
 class ComponentPlanner:
-    def __init__(self, kb=None, llm_client=None):
+    def __init__(self, kb=None, llm_client=None, bioicons=None):
         self.kb = kb or KnowledgeBase()
         self.llm_client = llm_client
+        self.bioicons = bioicons or self._load_bioicons()
 
     def plan(self, text, model="", style="science", layout=""):
         if model:
@@ -146,7 +148,7 @@ class ComponentPlanner:
             "title": str(data.get("title") or "科研配图"),
             "layout": self._layout(data.get("layout")),
             "style": str(data.get("style") or "science"),
-            "components": normalized_components,
+            "components": self._enrich_components(normalized_components),
             "connections": normalized_connections,
         }
 
@@ -198,7 +200,7 @@ class ComponentPlanner:
             "title": "科研配图组件编排",
             "layout": layout or analysis.get("layout", "hierarchical"),
             "style": style or analysis.get("style", "science"),
-            "components": components[:8],
+            "components": self._enrich_components(components[:8]),
             "connections": connections[:12],
             "source": "fallback",
         }
@@ -239,3 +241,36 @@ class ComponentPlanner:
             "width": int(value.get("width") or 150),
             "height": int(value.get("height") or 112),
         }
+
+    def _load_bioicons(self):
+        try:
+            from knowledge_base.bioicons_library import BioiconsLibrary
+
+            root = os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main")
+            return BioiconsLibrary(root)
+        except Exception:
+            return None
+
+    def _enrich_components(self, components):
+        if not self.bioicons or not getattr(self.bioicons, "available", False):
+            return components
+
+        enriched = []
+        for component in components:
+            item = dict(component)
+            query_parts = [item.get("name", ""), item.get("caption", ""), item.get("image_key", "")]
+            query = " ".join([part for part in query_parts if part])
+            match = self._pick_bioicon(query)
+            if match and match.get("svg_path"):
+                item["asset_source"] = "bioicons"
+                item["svg_path"] = match.get("svg_path", "")
+                item["asset_name"] = match.get("name", "")
+                item["asset_category"] = match.get("category", "")
+            enriched.append(item)
+        return enriched
+
+    def _pick_bioicon(self, query):
+        if not query:
+            return None
+        matches = self.bioicons.suggest(query, top_k=1)
+        return matches[0] if matches else None
