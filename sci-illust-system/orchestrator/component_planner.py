@@ -56,6 +56,11 @@ class ComponentPlanner:
         return ""
 
     def _prompt(self, text, style, layout):
+        context_lines = []
+        if self.kb and hasattr(self.kb, "get_context_snippets"):
+            for item in self.kb.get_context_snippets(text, top_k=3):
+                context_lines.append(item["title"] + ": " + item["preview"])
+        context_block = "\n".join(context_lines)
         return (
             "请把科研绘图需求转换为组件编排 JSON。\n"
             "禁止输出 Markdown、解释、总结、代码块。\n"
@@ -69,6 +74,7 @@ class ComponentPlanner:
             "如果需求很短，也要补全成 2-5 个相关组件。\n"
             "默认 style: " + (style or "science") + "。\n"
             "用户指定 layout: " + (layout or "auto") + "。\n"
+            "领域语料:\n" + (context_block or "无") + "\n"
             "需求: " + text
         )
 

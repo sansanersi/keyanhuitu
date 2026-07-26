@@ -30,6 +30,13 @@ class RequirementAnalyzer:
         figure_type = self._guess_figure_type(text, relations)
         layout = self._suggest_layout(figure_type, relations)
         style = "science"
+        context = []
+        if self.kb and hasattr(self.kb, "get_context_snippets"):
+            context = self.kb.get_context_snippets(text, top_k=3)
+
+        summary = "学科: " + domain + " | 元素: " + str(len(elements)) + " 个"
+        if context:
+            summary += " | 语料: " + "; ".join([item["title"] for item in context[:2]])
 
         return {
             "domain": domain,
@@ -39,7 +46,8 @@ class RequirementAnalyzer:
             "layout": layout,
             "style": style,
             "view_type": "2d_top",
-            "analysis_summary": "学科: " + domain + " | 元素: " + str(len(elements)) + " 个",
+            "knowledge_context": context,
+            "analysis_summary": summary,
         }
 
     def _extract_elements(self, text):
@@ -48,6 +56,8 @@ class RequirementAnalyzer:
 
         if self.kb:
             for result in self.kb.query(text, top_k=8):
+                if result.get("source") == "corpus":
+                    continue
                 metadata = result["metadata"]
                 name = result["term"]
                 if name in seen:

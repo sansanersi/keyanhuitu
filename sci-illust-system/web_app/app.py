@@ -23,9 +23,17 @@ from knowledge_base.kb_core import KnowledgeBase
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
+FOCUS_DOMAIN = os.environ.get("SCI_FOCUS_DOMAIN", "biology")
+CORPUS_PATHS = [
+    os.path.join(BASE_DIR, "data", "corpus", FOCUS_DOMAIN),
+    os.path.join(BASE_DIR, "data", "corpus"),
+]
+
 kb = KnowledgeBase(
     vocab_path=os.path.join(BASE_DIR, "data", "domain_vocab.json"),
     color_scheme_path=os.path.join(BASE_DIR, "data", "color_schemes", "default_scheme.json"),
+    focus_domain=FOCUS_DOMAIN,
+    corpus_paths=CORPUS_PATHS,
 )
 el = ElementLibrary(kb.vocabulary)
 db = KnowledgeDatabase()
@@ -99,6 +107,8 @@ def dashboard():
         "domains": stats["domains"],
         "kb_terms": kb.stats["total_terms"],
         "kb_vectors": kb.stats["vector_index_size"],
+        "focus_domain": kb.stats.get("focus_domain", FOCUS_DOMAIN),
+        "corpus_documents": kb.stats.get("corpus_documents", 0),
         "bioicons_available": bioicons.available,
         "bioicons_count": bioicons.count,
         "ollama_models": _get_ollama_models(),
@@ -142,6 +152,17 @@ def update_or_delete_entry(eid):
 @app.route("/api/search")
 def search_kb():
     return jsonify({"results": kb.query(request.args.get("q", ""), top_k=10)})
+
+
+@app.route("/api/domain/status")
+def domain_status():
+    return jsonify({
+        "focus_domain": kb.stats.get("focus_domain", FOCUS_DOMAIN),
+        "kb_terms": kb.stats["total_terms"],
+        "corpus_documents": kb.stats.get("corpus_documents", 0),
+        "bioicons_count": bioicons.count,
+        "available_domains": kb.vocabulary.domains,
+    })
 
 
 @app.route("/api/elements/suggest")
