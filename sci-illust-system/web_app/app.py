@@ -14,11 +14,16 @@ for path in [os.path.dirname(BASE_DIR), os.path.dirname(os.path.dirname(BASE_DIR
 
 from flask import Flask, jsonify, render_template, request
 
-from database import KnowledgeDatabase
-from document_processor import DocumentProcessor
+try:
+    from .database import KnowledgeDatabase
+    from .document_processor import DocumentProcessor
+except ImportError:
+    from database import KnowledgeDatabase
+    from document_processor import DocumentProcessor
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
+from text_kb.graphrag_manager import GraphRAGTextKBManager
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
@@ -38,6 +43,7 @@ kb = KnowledgeBase(
 el = ElementLibrary(kb.vocabulary)
 db = KnowledgeDatabase()
 dp = DocumentProcessor()
+text_kb = GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN)
 bioicons = BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main"))
 
 
@@ -60,6 +66,10 @@ def import_builtin():
 
 
 import_builtin()
+
+
+def sync_uploaded_documents():
+    return dp.sync_uploads()
 
 
 def _ollama_base_url():
@@ -108,7 +118,9 @@ def favicon():
 
 @app.route("/api/dashboard")
 def dashboard():
+    sync_uploaded_documents()
     stats = db.stats
+    text_kb_status = text_kb.status(FOCUS_DOMAIN)
     return jsonify({
         "entries": stats["entries"],
         "documents": stats["documents"],
@@ -121,6 +133,7 @@ def dashboard():
         "bioicons_available": bioicons.available,
         "bioicons_count": bioicons.count,
         "ollama_models": _get_ollama_models(),
+        "text_kb": text_kb_status,
     })
 
 
@@ -160,7 +173,23 @@ def update_or_delete_entry(eid):
 
 @app.route("/api/search")
 def search_kb():
-    return jsonify({"results": kb.query(request.args.get("q", ""), top_k=10)})
+    query = request.args.get("q", "").strip()
+    results = kb.query(query, top_k=10)
+    snippets = kb.get_context_snippets(query, top_k=3) if query else []
+    text_kb_status = text_kb.status(FOCUS_DOMAIN)
+    text_kb_result = text_kb.query(query, domain=FOCUS_DOMAIN) if query else {
+        "available": False,
+        "query": "",
+        "method": "local",
+        "answer": "",
+        "error": "empty query",
+    }
+    return jsonify({
+        "results": results,
+        "snippets": snippets,
+        "text_kb": text_kb_result,
+        "text_kb_status": text_kb_status,
+    })
 
 
 @app.route("/api/domain/status")
@@ -241,7 +270,26 @@ def upload_document():
 
 @app.route("/api/documents")
 def list_documents():
+    sync_uploaded_documents()
     return jsonify({"documents": db.list_documents()})
+
+
+@app.route("/api/text-kb/status")
+def text_kb_status():
+    sync_uploaded_documents()
+    return jsonify(text_kb.status(FOCUS_DOMAIN))
+
+
+@app.route("/api/text-kb/init", methods=["POST"])
+def init_text_kb():
+    data = request.json or {}
+    initialize_cli = bool(data.get("initialize_cli", False))
+    force = bool(data.get("force", False))
+    try:
+        result = text_kb.ensure_workspace(FOCUS_DOMAIN, initialize_cli=initialize_cli, force=force)
+        return jsonify({"success": True, **result})
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)})
 
 
 @app.route("/api/documents/<int:did>", methods=["DELETE"])
