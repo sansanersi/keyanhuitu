@@ -1333,19 +1333,19 @@ function loadDashboard() {
     html += "<div class=\"section-title\"><h3>仪表盘组件</h3><span class=\"muted\">把需求、语料、素材、布局拆成独立模块</span></div>";
     html += "<div class=\"component-grid\">";
     html += "<div class=\"component-card\" style=\"--accent:#58d5ff\"><div class=\"component-head\"><div class=\"component-name\">需求解析</div><span class=\"component-state\"><span class=\"dot\"></span>运行中</span></div><div class=\"component-desc\">解析客户描述，提取领域、图类型、核心实体和关系，作为后续绘图的输入。</div><div class=\"component-foot\"><span>输入</span><strong>自然语言</strong></div></div>";
-    html += "<div class=\"component-card\" style=\"--accent:#43d4b1\"><div class=\"component-head\"><div class=\"component-name\">文本语料</div><span class=\"component-state\"><span class=\"dot\"></span>已连接</span></div><div class=\"component-desc\">来自专精领域的论文、图注、术语和本地资料，用于补充生成上下文。</div><div class=\"component-foot\"><span>语料</span><strong>" + escapeHtml(String(data.corpus_documents || 0)) + " 篇</strong></div></div>";
     html += "<div class=\"component-card\" style=\"--accent:#f6b66f\"><div class=\"component-head\"><div class=\"component-name\">图像素材</div><span class=\"component-state\"><span class=\"dot\"></span>可用</span></div><div class=\"component-desc\">Bioicons SVG 与本地图元库，用来把术语映射成可直接绘制的视觉对象。</div><div class=\"component-foot\"><span>素材</span><strong>" + escapeHtml(String(data.bioicons_count || 0)) + " 个</strong></div></div>";
+    html += "<div class=\"component-card\" style=\"--accent:#43d4b1\"><div class=\"component-head\"><div class=\"component-name\">文本语料</div><span class=\"component-state\"><span class=\"dot\"></span>已连接</span></div><div class=\"component-desc\">来自专精领域的论文、图注、术语和本地资料，用于补充生成上下文。</div><div class=\"component-foot\"><span>语料</span><strong>" + escapeHtml(String(data.corpus_documents || 0)) + " 篇</strong></div></div>";
     html += "<div class=\"component-card\" style=\"--accent:#7ab2ff\"><div class=\"component-head\"><div class=\"component-name\">布局引擎</div><span class=\"component-state\"><span class=\"dot\"></span>在线</span></div><div class=\"component-desc\">负责将组件、箭头和标签自动排布成可读的科研示意图，而不是单纯堆文本。</div><div class=\"component-foot\"><span>输出</span><strong>SVG</strong></div></div>";
     html += "<div class=\"component-card\" style=\"--accent:#a88cff\"><div class=\"component-head\"><div class=\"component-name\">渲染器</div><span class=\"component-state\"><span class=\"dot\"></span>就绪</span></div><div class=\"component-desc\">将布局结果转换为可下载、可编辑的最终图稿，支持组件图和知识图双路径。</div><div class=\"component-foot\"><span>格式</span><strong>矢量图</strong></div></div>";
     html += "<div class=\"component-card\" style=\"--accent:#ffb0b0\"><div class=\"component-head\"><div class=\"component-name\">导出层</div><span class=\"component-state\"><span class=\"dot\"></span>可下载</span></div><div class=\"component-desc\">把完成的图稿导出为 SVG，便于后续在论文、汇报和海报中继续编辑。</div><div class=\"component-foot\"><span>交付</span><strong>下载 SVG</strong></div></div>";
     html += "</div></section>";
 
     html += "<section class=\"card surface workflow-panel\" style=\"grid-column:1/-1\">";
-    html += "<div class=\"section-title\"><h3>绘图链路</h3><span class=\"muted\">需求 -> 语料 -> 素材 -> 布局 -> SVG</span></div>";
+    html += "<div class=\"section-title\"><h3>绘图链路</h3><span class=\"muted\">需求 -> 素材 -> 语料 -> 布局 -> SVG</span></div>";
     html += "<div class=\"workflow-grid\">";
     html += "<div class=\"workflow-step\"><strong>需求解析</strong><span>从客户描述中抽取领域、图类型和核心实体。</span></div>";
-    html += "<div class=\"workflow-step\"><strong>文本召回</strong><span>从专精领域语料里找到可作为上下文的证据。</span></div>";
     html += "<div class=\"workflow-step\"><strong>素材匹配</strong><span>从 Bioicons 和图元库中挑选可绘制的视觉对象。</span></div>";
+    html += "<div class=\"workflow-step\"><strong>文本召回</strong><span>从专精领域语料里找到可作为上下文的证据。</span></div>";
     html += "<div class=\"workflow-step\"><strong>组合渲染</strong><span>用布局器和渲染器输出可编辑 SVG 图稿。</span></div>";
     html += "</div></section>";
 
