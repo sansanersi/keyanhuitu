@@ -1,7 +1,6 @@
 """科研配图管理系统 - Flask 应用。"""
 import os
 import sys
-from datetime import datetime
 
 BASE_SITE = r"C:\ProgramData\anaconda3\Lib\site-packages"
 if os.path.isdir(BASE_SITE) and BASE_SITE not in sys.path:
@@ -17,9 +16,11 @@ from flask import Flask, jsonify, render_template, request
 try:
     from .database import KnowledgeDatabase
     from .document_processor import DocumentProcessor
+    from .services import DocumentService, DrawService, SearchService, SystemService
 except ImportError:
     from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
+    from services import DocumentService, DrawService, SearchService, SystemService
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
@@ -45,6 +46,12 @@ db = KnowledgeDatabase()
 dp = DocumentProcessor()
 text_kb = GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN)
 bioicons = BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main"))
+document_service = DocumentService(db, dp, text_kb, FOCUS_DOMAIN)
+search_service = SearchService(kb, text_kb, FOCUS_DOMAIN)
+draw_service = DrawService(
+    knowledge_base=kb,
+    pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
+)
 
 
 def import_builtin():
@@ -69,7 +76,7 @@ import_builtin()
 
 
 def sync_uploaded_documents():
-    return dp.sync_uploads()
+    return document_service.sync_uploaded_documents()
 
 
 def _ollama_base_url():
@@ -106,6 +113,18 @@ def _web_mode():
     return os.environ.get("SCI_WEB_MODE", "stable").strip().lower() or "stable"
 
 
+system_service = SystemService(
+    database_getter=lambda: db,
+    knowledge_base=kb,
+    text_kb_manager=text_kb,
+    bioicons_library=bioicons,
+    focus_domain=FOCUS_DOMAIN,
+    sync_uploaded_documents=sync_uploaded_documents,
+    get_ollama_models=lambda: _get_ollama_models(),
+    web_mode_getter=_web_mode,
+)
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -118,23 +137,7 @@ def favicon():
 
 @app.route("/api/dashboard")
 def dashboard():
-    sync_uploaded_documents()
-    stats = db.stats
-    text_kb_status = text_kb.status(FOCUS_DOMAIN)
-    return jsonify({
-        "entries": stats["entries"],
-        "documents": stats["documents"],
-        "vectorized_documents": stats["vectorized_documents"],
-        "domains": stats["domains"],
-        "kb_terms": kb.stats["total_terms"],
-        "kb_vectors": kb.stats["vector_index_size"],
-        "focus_domain": kb.stats.get("focus_domain", FOCUS_DOMAIN),
-        "corpus_documents": kb.stats.get("corpus_documents", 0),
-        "bioicons_available": bioicons.available,
-        "bioicons_count": bioicons.count,
-        "ollama_models": _get_ollama_models(),
-        "text_kb": text_kb_status,
-    })
+    return jsonify(system_service.dashboard())
 
 
 @app.route("/api/entries")
@@ -174,22 +177,7 @@ def update_or_delete_entry(eid):
 @app.route("/api/search")
 def search_kb():
     query = request.args.get("q", "").strip()
-    results = kb.query(query, top_k=10)
-    snippets = kb.get_context_snippets(query, top_k=3) if query else []
-    text_kb_status = text_kb.status(FOCUS_DOMAIN)
-    text_kb_result = text_kb.query(query, domain=FOCUS_DOMAIN) if query else {
-        "available": False,
-        "query": "",
-        "method": "local",
-        "answer": "",
-        "error": "empty query",
-    }
-    return jsonify({
-        "results": results,
-        "snippets": snippets,
-        "text_kb": text_kb_result,
-        "text_kb_status": text_kb_status,
-    })
+    return jsonify(search_service.search(query))
 
 
 @app.route("/api/domain/status")
@@ -270,14 +258,12 @@ def upload_document():
 
 @app.route("/api/documents")
 def list_documents():
-    sync_uploaded_documents()
-    return jsonify({"documents": db.list_documents()})
+    return jsonify(document_service.list_documents())
 
 
 @app.route("/api/text-kb/status")
 def text_kb_status():
-    sync_uploaded_documents()
-    return jsonify(text_kb.status(FOCUS_DOMAIN))
+    return jsonify(document_service.text_kb_status())
 
 
 @app.route("/api/text-kb/init", methods=["POST"])
@@ -286,7 +272,7 @@ def init_text_kb():
     initialize_cli = bool(data.get("initialize_cli", False))
     force = bool(data.get("force", False))
     try:
-        result = text_kb.ensure_workspace(FOCUS_DOMAIN, initialize_cli=initialize_cli, force=force)
+        result = document_service.init_text_kb(initialize_cli=initialize_cli, force=force)
         return jsonify({"success": True, **result})
     except Exception as exc:
         return jsonify({"success": False, "error": str(exc)})
@@ -300,49 +286,23 @@ def delete_document(did):
 
 @app.route("/api/ollama/status")
 def ollama_status():
-    models = _get_ollama_models()
-    mode = _web_mode()
-    return jsonify({
-        "running": len(models) > 0,
-        "models": models,
-        "base_url": _ollama_base_url(),
-        "default_model": _ollama_default_model(),
-        "web_mode": mode,
-        "server_label": "Flask 稳定服务" if mode == "stable" else "Flask 开发服务",
-    })
-
+    return jsonify(system_service.ollama_status(_ollama_base_url(), _ollama_default_model()))
 
 @app.route("/api/ollama/config", methods=["GET", "POST"])
 def ollama_config():
     if request.method == "GET":
-        return jsonify({
-            "base_url": _ollama_base_url(),
-            "default_model": _ollama_default_model(),
-            "models": _get_ollama_models(),
-        })
+        return jsonify(system_service.ollama_config(_ollama_base_url(), _ollama_default_model()))
 
     data = request.json or {}
     base_url = _normalize_ollama_base_url(data.get("base_url", ""))
     default_model = data.get("default_model", "").strip()
-    if base_url:
-        db.set_setting("ollama_base_url", base_url)
-    if default_model:
-        db.set_setting("ollama_default_model", default_model)
-    return jsonify({
-        "success": True,
-        "base_url": _ollama_base_url(),
-        "default_model": _ollama_default_model(),
-        "models": _get_ollama_models(),
-    })
+    system_service.update_ollama_config(base_url=base_url, default_model=default_model)
+    return jsonify({"success": True, **system_service.ollama_config(_ollama_base_url(), _ollama_default_model())})
 
 
 @app.route("/api/draw/models")
 def draw_models():
-    return jsonify({
-        "models": _get_ollama_models(),
-        "default_model": _ollama_default_model(),
-        "base_url": _ollama_base_url(),
-    })
+    return jsonify(system_service.draw_models(_ollama_base_url(), _ollama_default_model()))
 
 
 @app.route("/api/draw/shapes")
@@ -368,116 +328,10 @@ def draw_styles():
 
 @app.route("/api/draw", methods=["POST"])
 def draw():
-    data = request.json or {}
-    text = data.get("text", "").strip()
-    if not text:
+    response = draw_service.draw(request.json or {})
+    if not response.get("success") and response.get("error") == "missing_text":
         return jsonify({"success": False, "error": "请输入绘图需求"})
-
-    figure_type = data.get("figure_type", "")
-    style = data.get("style", "")
-    layout = data.get("layout", "")
-    model = data.get("model", "")
-    canvas_width = int(data.get("canvas_width", 900))
-    canvas_height = int(data.get("canvas_height", 600))
-
-    if not figure_type or not style:
-        from orchestrator.text_analyzer import RequirementAnalyzer
-
-        analysis = RequirementAnalyzer(kb).analyze(text)
-        figure_type = figure_type or analysis["figure_type"]
-        style = style or analysis["style"]
-
-    from drawing.layout_engine import LayoutType
-    from orchestrator.pipeline import SciIllustPipeline
-
-    layout_map = {
-        "force_directed": LayoutType.FORCE_DIRECTED,
-        "hierarchical": LayoutType.HIERARCHICAL,
-        "grid": LayoutType.GRID,
-        "radial": LayoutType.RADIAL,
-    }
-    pipeline = SciIllustPipeline()
-    if model:
-        result = pipeline.process_components(
-            text,
-            model=model,
-            style_name=style,
-            layout=layout or "hierarchical",
-            canvas_width=canvas_width,
-            canvas_height=canvas_height,
-            auto_render=True,
-        )
-    else:
-        result = pipeline.process(
-            text,
-            figure_type=figure_type,
-            style_name=style,
-            layout_type=layout_map.get(layout) if layout else None,
-            canvas_width=canvas_width,
-            canvas_height=canvas_height,
-            auto_render=True,
-        )
-
-    analysis = result.get("analysis", {})
-    elements = result.get("elements", [])
-    relations = result.get("relations", [])
-
-    if result.get("mode") == "components":
-        element_list = [
-            {
-                "id": item.get("id", ""),
-                "name": item.get("name", ""),
-                "shape": item.get("image_key", ""),
-                "caption": item.get("caption", ""),
-            }
-            for item in result.get("components", [])[:15]
-        ]
-        relation_list = [
-            {
-                "source": item.get("source", ""),
-                "target": item.get("target", ""),
-                "type": item.get("type", "arrow"),
-                "label": item.get("label", ""),
-                "directed": True,
-            }
-            for item in result.get("connections", [])[:12]
-        ]
-    else:
-        element_list = [
-            {"id": item.get("name", ""), "name": item.get("name", ""), "shape": item.get("shape", "")}
-            for item in elements[:15]
-        ]
-        relation_list = []
-        for relation in relations[:10]:
-            source = getattr(relation, "source", "")
-            target = getattr(relation, "target", "")
-            relation_type = getattr(relation, "relation_type", "connected_to")
-            directed = getattr(relation, "directed", False)
-            relation_list.append({
-                "source": source,
-                "target": target,
-                "type": relation_type,
-                "directed": directed,
-            })
-
-    return jsonify({
-        "success": True,
-        "svg": result.get("svg", ""),
-        "analysis": {
-            "domain": analysis.get("domain", ""),
-            "figure_type": figure_type,
-            "style": style,
-            "canvas": f"{canvas_width}x{canvas_height}",
-        },
-        "elements": element_list,
-        "relations": relation_list,
-        "summary": analysis.get("analysis_summary", ""),
-        "mode": result.get("mode", "elements"),
-        "component_plan": result.get("component_plan"),
-        "model_used": model or "keyword",
-        "timestamp": str(datetime.now()),
-    })
-
+    return jsonify(response)
 
 @app.route("/api/query", methods=["POST"])
 def query_llm():
