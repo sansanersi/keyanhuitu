@@ -1,0 +1,42 @@
+{
+  "domain": "research_illustration",
+  "source_document": "科研配图AI系统.md",
+  "scope": "workflow_reference",
+  "layout_rules": [
+    {
+      "figure_type": "pathway_diagram",
+      "preferred_layout": "hierarchical",
+      "supported_views": ["2d_top", "2d_flat"],
+      "spacing_priority": "readability",
+      "notes": "适合从上到下或从左到右表达因果和时序。"
+    },
+    {
+      "figure_type": "mechanism_diagram",
+      "preferred_layout": "hierarchical",
+      "supported_views": ["2d_flat", "2.5d_isometric"],
+      "spacing_priority": "causal_order",
+      "notes": "机制图要求关键步骤顺序清晰。"
+    },
+    {
+      "figure_type": "network_diagram",
+      "preferred_layout": "force_directed",
+      "supported_views": ["2d_flat"],
+      "spacing_priority": "balance",
+      "notes": "适合非线性多节点关系网络。"
+    },
+    {
+      "figure_type": "structure_diagram",
+      "preferred_layout": "grid",
+      "supported_views": ["2d_flat", "2.5d_isometric", "3d_perspective"],
+      "spacing_priority": "alignment",
+      "notes": "适合规则阵列、结构重复和器件示意。"
+    },
+    {
+      "figure_type": "radial_process_diagram",
+      "preferred_layout": "radial",
+      "supported_views": ["2d_top"],
+      "spacing_priority": "center_emphasis",
+      "notes": "适合中心向外扩散的信号和层级结构。"
+    }
+  ]
+}

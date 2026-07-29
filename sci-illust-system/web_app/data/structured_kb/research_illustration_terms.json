@@ -1,0 +1,98 @@
+{
+  "domain": "research_illustration",
+  "source_document": "科研配图AI系统.md",
+  "scope": "workflow_reference",
+  "terms": [
+    {
+      "name": "受体",
+      "english": "receptor",
+      "term_type": "entity",
+      "category": "biology_component",
+      "description": "信号通路图中的膜受体或胞内受体。"
+    },
+    {
+      "name": "配体",
+      "english": "ligand",
+      "term_type": "entity",
+      "category": "biology_component",
+      "description": "与受体结合并触发下游事件的分子。"
+    },
+    {
+      "name": "信号分子",
+      "english": "signaling molecule",
+      "term_type": "entity",
+      "category": "biology_component",
+      "description": "在通路中传递活化信息的中间节点。"
+    },
+    {
+      "name": "细胞膜",
+      "english": "cell membrane",
+      "term_type": "entity",
+      "category": "biology_structure",
+      "description": "膜受体、配体结合和跨膜事件的空间边界。"
+    },
+    {
+      "name": "细胞核",
+      "english": "nucleus",
+      "term_type": "entity",
+      "category": "biology_structure",
+      "description": "信号最终影响基因表达的目标区域。"
+    },
+    {
+      "name": "命名实体识别",
+      "english": "named entity recognition",
+      "term_type": "method",
+      "category": "text_understanding",
+      "description": "从科研需求或语料中抽取标准化实体名称。"
+    },
+    {
+      "name": "文本转流程",
+      "english": "text to workflow",
+      "term_type": "method",
+      "category": "workflow_understanding",
+      "description": "把客户自然语言需求转换成结构化绘图流程。"
+    },
+    {
+      "name": "文本转SVG",
+      "english": "text to svg",
+      "term_type": "method",
+      "category": "asset_generation",
+      "description": "将结构化术语和组件信息转换为可编辑矢量图。"
+    },
+    {
+      "name": "层级布局",
+      "english": "hierarchical layout",
+      "term_type": "layout",
+      "category": "composition",
+      "description": "适用于流程、机制和通路方向表达的布局形式。"
+    },
+    {
+      "name": "力导向布局",
+      "english": "force directed layout",
+      "term_type": "layout",
+      "category": "composition",
+      "description": "适用于网络型关系图的均衡分布布局。"
+    },
+    {
+      "name": "网格布局",
+      "english": "grid layout",
+      "term_type": "layout",
+      "category": "composition",
+      "description": "适用于规则阵列和结构重复对象的布局。"
+    },
+    {
+      "name": "径向布局",
+      "english": "radial layout",
+      "term_type": "layout",
+      "category": "composition",
+      "description": "适用于中心向外扩散的通路或结构图。"
+    },
+    {
+      "name": "视觉定位",
+      "english": "visual grounding",
+      "term_type": "method",
+      "category": "post_processing",
+      "description": "把元素名称重新定位到成品图中的具体图形区域。"
+    }
+  ]
+}

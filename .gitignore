@@ -4,3 +4,9 @@ __pycache__/
 *.log
 
 dashboard-check.png
+
+# Web App 运行时数据库
+sci-illust-system/web_app/data/knowledge.db
+
+# GraphRAG 本地工作区与索引产物
+sci-illust-system/web_app/data/text_kb/

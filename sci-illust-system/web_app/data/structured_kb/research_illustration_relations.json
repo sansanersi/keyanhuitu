@@ -1,0 +1,49 @@
+{
+  "domain": "research_illustration",
+  "source_document": "科研配图AI系统.md",
+  "scope": "workflow_reference",
+  "relations": [
+    {
+      "source": "ligand",
+      "target": "receptor",
+      "relation_type": "binds_to",
+      "description": "配体与受体结合，作为通路起点。"
+    },
+    {
+      "source": "receptor",
+      "target": "signaling molecule",
+      "relation_type": "activates",
+      "description": "受体激活下游信号分子。"
+    },
+    {
+      "source": "signaling molecule",
+      "target": "nucleus",
+      "relation_type": "transmits_to",
+      "description": "信号分子将调控信息传递到细胞核。"
+    },
+    {
+      "source": "text requirement",
+      "target": "workflow schema",
+      "relation_type": "normalizes_into",
+      "description": "自然语言需求应被整理为结构化绘图流程。"
+    },
+    {
+      "source": "workflow schema",
+      "target": "illustration components",
+      "relation_type": "decomposes_into",
+      "description": "结构化流程拆解为可绘制的组件、关系和标注。"
+    },
+    {
+      "source": "illustration components",
+      "target": "layout engine",
+      "relation_type": "arranged_by",
+      "description": "组件需要交给布局引擎生成空间组织。"
+    },
+    {
+      "source": "layout engine",
+      "target": "svg output",
+      "relation_type": "renders_to",
+      "description": "布局结果进一步渲染成 SVG 交付物。"
+    }
+  ]
+}

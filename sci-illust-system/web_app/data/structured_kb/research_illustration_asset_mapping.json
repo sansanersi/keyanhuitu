@@ -1,0 +1,63 @@
+{
+  "domain": "research_illustration",
+  "source_document": "科研配图AI系统.md",
+  "scope": "workflow_reference",
+  "asset_mappings": [
+    {
+      "normalized_term": "receptor",
+      "display_name": "受体",
+      "component_type": "entity_card",
+      "preferred_shape": "transmembrane_receptor",
+      "asset_family": "bioicons_or_svg_component",
+      "notes": "优先匹配膜受体、跨膜结构图元。"
+    },
+    {
+      "normalized_term": "ligand",
+      "display_name": "配体",
+      "component_type": "entity_card",
+      "preferred_shape": "small_molecule",
+      "asset_family": "bioicons_or_svg_component",
+      "notes": "优先匹配小分子、蛋白配体图元。"
+    },
+    {
+      "normalized_term": "signaling molecule",
+      "display_name": "信号分子",
+      "component_type": "entity_card",
+      "preferred_shape": "rounded_rect",
+      "asset_family": "svg_component",
+      "notes": "在流程中通常作为中间状态组件。"
+    },
+    {
+      "normalized_term": "nucleus",
+      "display_name": "细胞核",
+      "component_type": "structure_card",
+      "preferred_shape": "organelle",
+      "asset_family": "bioicons_or_svg_component",
+      "notes": "适合做终点或转录目标区域。"
+    },
+    {
+      "normalized_term": "cell membrane",
+      "display_name": "细胞膜",
+      "component_type": "boundary_component",
+      "preferred_shape": "membrane_band",
+      "asset_family": "svg_component",
+      "notes": "用于界定膜内外空间关系。"
+    },
+    {
+      "normalized_term": "activation",
+      "display_name": "激活",
+      "component_type": "relation_edge",
+      "preferred_shape": "arrow",
+      "asset_family": "svg_relation",
+      "notes": "箭头应明确方向和作用对象。"
+    },
+    {
+      "normalized_term": "transcription",
+      "display_name": "转录",
+      "component_type": "annotation_component",
+      "preferred_shape": "label_tag",
+      "asset_family": "svg_annotation",
+      "notes": "通常与细胞核区域结合显示。"
+    }
+  ]
+}
