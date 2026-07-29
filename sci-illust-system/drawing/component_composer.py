@@ -1,5 +1,6 @@
 import base64
 import os
+import re
 from html import escape
 
 from drawing.element_gen import SVGElementGenerator
@@ -210,8 +211,8 @@ class ComponentComposer:
             svg_path=svg_path,
         )
         title = self._clip(component.get("name", ""), 16)
-        caption = self._clip(component.get("caption", ""), 22)
-        return (
+        caption = self._clip(self._display_caption(component), 22)
+        parts = [
             "<g class=\"image-text-component\" id=\""
             + escape(component.get("id", "component"))
             + "\" transform=\"translate("
@@ -238,15 +239,83 @@ class ComponentComposer:
             + "\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#172033\">"
             + escape(title)
             + "</text>"
-            + "<text class=\"component-caption\" x=\""
-            + self._num(width / 2)
-            + "\" y=\""
-            + self._num(height - 12)
-            + "\" text-anchor=\"middle\" font-size=\"10\" fill=\"#667085\">"
-            + escape(caption)
-            + "</text>"
-            + "</g>"
-        )
+        ]
+        if caption:
+            parts.append(
+                "<text class=\"component-caption\" x=\""
+                + self._num(width / 2)
+                + "\" y=\""
+                + self._num(height - 12)
+                + "\" text-anchor=\"middle\" font-size=\"10\" fill=\"#667085\">"
+                + escape(caption)
+                + "</text>"
+            )
+        parts.append("</g>")
+        return "".join(parts)
+
+    def _display_caption(self, component):
+        if not component.get("show_caption", False):
+            return ""
+        name_text = str(component.get("name", "") or "").strip()
+        caption_text = str(component.get("caption", "") or "").strip()
+        if not caption_text:
+            return ""
+        if self._is_redundant_caption(name_text, caption_text):
+            return ""
+        return caption_text
+
+    def _is_redundant_caption(self, name, caption):
+        normalized_name = self._normalize_text(name)
+        normalized_caption = self._normalize_text(caption)
+        if not normalized_name or not normalized_caption:
+            return False
+        if normalized_name == normalized_caption:
+            return True
+        if normalized_name in normalized_caption or normalized_caption in normalized_name:
+            return True
+
+        name_tokens = self._meaningful_tokens(name)
+        caption_tokens = self._meaningful_tokens(caption)
+        if not name_tokens or not caption_tokens:
+            return False
+        overlap = name_tokens & caption_tokens
+        smaller = min(len(name_tokens), len(caption_tokens))
+        if smaller <= 0:
+            return False
+        overlap_ratio = len(overlap) / smaller
+        if overlap_ratio >= 0.6:
+            return True
+
+        name_order = self._ordered_meaningful_tokens(name)
+        caption_order = self._ordered_meaningful_tokens(caption)
+        if name_order and caption_order and name_order[0] == caption_order[0] and overlap_ratio >= 0.5:
+            return True
+        return False
+
+    def _normalize_text(self, text):
+        return re.sub(r"[\W_]+", "", str(text or "").lower())
+
+    def _meaningful_tokens(self, text):
+        return set(self._ordered_meaningful_tokens(text))
+
+    def _ordered_meaningful_tokens(self, text):
+        ordered = []
+        tokens = set()
+        stopwords = {
+            "相互作用", "作用", "过程", "步骤", "通路", "信号", "蛋白", "分子", "细胞", "基因",
+            "表达", "调控", "调节", "激活", "结合", "传递", "传输", "转录", "受体", "配体",
+            "protein", "molecule", "signal", "signaling", "interaction", "process", "step",
+            "pathway", "activity", "activation", "binding", "regulation", "transfer",
+        }
+        for token in re.findall(r"[A-Za-z0-9\-]+|[\u4e00-\u9fff]{2,}", str(text or "")):
+            normalized = token.lower()
+            if normalized in stopwords:
+                continue
+            if normalized in tokens:
+                continue
+            tokens.add(normalized)
+            ordered.append(normalized)
+        return ordered
 
     def _render_visual(self, name, shape, colors, size, svg_path=""):
         if svg_path and os.path.isfile(svg_path):

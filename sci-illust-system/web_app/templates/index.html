@@ -560,6 +560,153 @@ button:active { transform: translateY(1px) scale(.985); }
   border-radius: 8px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
+.search-shell {
+  display: grid;
+  gap: 16px;
+}
+.search-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, .75fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.search-intro {
+  min-height: 180px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(88, 213, 255, .09), transparent 42%),
+    linear-gradient(180deg, rgba(17, 31, 53, .98), rgba(10, 18, 31, .98));
+}
+.search-intro h4,
+.search-status h4,
+.search-answer h4,
+.search-evidence h4,
+.search-hits h4 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.search-intro p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 13px;
+}
+.search-status {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(11, 20, 35, .96);
+}
+.search-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.search-stat {
+  padding: 12px;
+  border: 1px solid rgba(34, 52, 79, .72);
+  border-radius: 10px;
+  background: rgba(17, 31, 53, .82);
+}
+.search-stat strong {
+  display: block;
+  font-size: 20px;
+  color: var(--ink);
+}
+.search-stat span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.search-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.search-query {
+  display: grid;
+  gap: 8px;
+}
+.search-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, .9fr);
+  gap: 16px;
+}
+.search-answer,
+.search-evidence,
+.search-hits {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(11, 20, 35, .96);
+}
+.search-answer-body {
+  min-height: 160px;
+  color: var(--text);
+  line-height: 1.8;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.search-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.search-side {
+  display: grid;
+  gap: 16px;
+}
+.evidence-list,
+.search-hit-list {
+  display: grid;
+  gap: 10px;
+}
+.evidence-item,
+.search-hit-item {
+  padding: 14px;
+  border: 1px solid rgba(34, 52, 79, .72);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(17, 31, 53, .95), rgba(11, 20, 35, .95));
+}
+.evidence-item strong,
+.search-hit-item strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+}
+.evidence-item p,
+.search-hit-item p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.search-hit-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+.search-hit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.search-score {
+  color: #9cc4ff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -852,12 +999,16 @@ to { opacity: 1; transform: translateY(0) scale(1); }
   .workspace { max-width: none; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .draw-layout { grid-template-columns: 1fr; }
+  .search-hero,
+  .search-layout { grid-template-columns: 1fr; }
   .workflow-grid { grid-template-columns: 1fr 1fr; }
   .analysis, .form-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .workflow-grid { grid-template-columns: 1fr; }
   .topbar { align-items: flex-start; flex-direction: column; }
+  .search-toolbar,
+  .search-stat-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -1008,17 +1159,37 @@ to { opacity: 1; transform: translateY(0) scale(1); }
         </div>
       </section>
 
-      <section id="page-search" class="page">
+<section id="page-search" class="page">
         <div class="card surface">
         <div class="section-title">
           <h3>知识检索</h3>
-          <span class="muted">RAG / 关键词检索</span>
+          <span class="muted">GraphRAG / 术语检索 / 上下文证据</span>
         </div>
-        <div class="toolbar">
-          <input class="field" id="search-query" placeholder="输入科研术语或绘图需求">
-          <button class="btn-primary" type="button" id="search-btn">检索</button>
+        <div class="search-shell">
+          <div class="search-hero">
+            <div class="search-intro">
+              <h4>面向科研绘图的文本检索面板</h4>
+              <p>输入生物学术语、通路名称或绘图需求，系统会并行调用术语库、文本语料和 GraphRAG 索引，返回结构化回答、证据摘要和命中条目。</p>
+            </div>
+            <div class="search-status" id="search-status">
+              <h4>当前索引状态</h4>
+              <div class="search-stat-grid">
+                <div class="search-stat"><strong>--</strong><span>领域</span></div>
+                <div class="search-stat"><strong>--</strong><span>清洗语料</span></div>
+                <div class="search-stat"><strong>--</strong><span>输入文档</span></div>
+                <div class="search-stat"><strong>--</strong><span>索引状态</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="search-toolbar">
+            <div class="search-query">
+              <label class="form-label" for="search-query">检索问题</label>
+              <input class="field" id="search-query" placeholder="例如：EGFR 信号通路如何从配体结合传递到细胞核？">
+            </div>
+            <button class="btn-primary" type="button" id="search-btn">开始检索</button>
+          </div>
+          <div id="search-results"><div class="empty"><strong>等待检索</strong><span>输入关键词后，这里会展示 GraphRAG 回答、证据摘要和术语命中列表。</span></div></div>
         </div>
-        <div id="search-results" class="table-wrap"><div class="empty">输入关键词后查看匹配条目。</div></div>
         </div>
       </section>
 
@@ -1232,6 +1403,7 @@ function switchPage(name) {
   if (name === "dashboard") loadDashboard();
   if (name === "entries") loadEntries();
   if (name === "documents") loadDocuments();
+  if (name === "search") loadSearchStatus();
   if (name === "settings") loadSettings();
   scheduleEnhance($("page-" + name));
 }
@@ -1582,35 +1754,110 @@ function deleteDocument(id) {
   });
 }
 
+function renderSearchStatus(status) {
+  var data = status || {};
+  var html = "";
+  html += "<h4>当前索引状态</h4>";
+  html += "<div class=\"search-stat-grid\">";
+  html += "<div class=\"search-stat\"><strong>" + escapeHtml(domainLabel(data.domain)) + "</strong><span>领域</span></div>";
+  html += "<div class=\"search-stat\"><strong>" + escapeHtml(String(data.cleaned_documents || 0)) + "</strong><span>清洗语料</span></div>";
+  html += "<div class=\"search-stat\"><strong>" + escapeHtml(String(data.input_documents || 0)) + "</strong><span>输入文档</span></div>";
+  html += "<div class=\"search-stat\"><strong>" + escapeHtml(data.index_ready ? "已就绪" : "未构建") + "</strong><span>索引状态</span></div>";
+  html += "</div>";
+  $("search-status").innerHTML = html;
+}
+
+function loadSearchStatus() {
+  request("GET", "/api/text-kb/status").then(function(data) {
+    renderSearchStatus(data || {});
+  }).catch(function() {
+    renderSearchStatus({});
+  });
+}
+
+function renderSearchResults(data) {
+  var results = data.results || [];
+  var snippets = data.snippets || [];
+  var textKb = data.text_kb || {};
+  var status = data.text_kb_status || {};
+  var html = "";
+
+  renderSearchStatus(status);
+
+  html += "<div class=\"search-layout\">";
+  html += "<div class=\"search-answer\">";
+  html += "<h4>GraphRAG 回答</h4>";
+  html += "<div class=\"search-meta\">";
+  html += "<span class=\"badge general\">" + escapeHtml(domainLabel(status.domain)) + "</span>";
+  html += "<span class=\"badge general\">方法 " + escapeHtml(textKb.method || "local") + "</span>";
+  html += "<span class=\"badge general\">语料 " + escapeHtml(String(status.cleaned_documents || 0)) + "</span>";
+  html += "<span class=\"badge general\">" + escapeHtml(status.index_ready ? "索引已就绪" : "索引未就绪") + "</span>";
+  html += "</div>";
+  if (textKb.available && textKb.answer) {
+    html += "<div class=\"search-answer-body\">" + escapeHtml(textKb.answer) + "</div>";
+  } else {
+    html += "<div class=\"empty\"><strong>暂无回答</strong><span>" + escapeHtml(textKb.error || "当前文本知识库尚未返回回答。") + "</span></div>";
+  }
+  html += "</div>";
+
+  html += "<div class=\"search-side\">";
+  html += "<div class=\"search-evidence\">";
+  html += "<h4>上下文证据</h4>";
+  if (!snippets.length) {
+    html += "<div class=\"empty\">暂无证据摘要</div>";
+  } else {
+    html += "<div class=\"evidence-list\">";
+    snippets.forEach(function(item) {
+      html += "<div class=\"evidence-item\">";
+      html += "<strong>" + escapeHtml(item.title || "语料片段") + "</strong>";
+      html += "<p>" + escapeHtml(item.preview || "") + "</p>";
+      html += "<div class=\"search-hit-meta\"><span class=\"badge general\">" + escapeHtml(item.source || "corpus") + "</span><span class=\"search-score\">相关度 " + escapeHtml(String(item.score || 0)) + "</span></div>";
+      html += "</div>";
+    });
+    html += "</div>";
+  }
+  html += "</div>";
+
+  html += "<div class=\"search-hits\">";
+  html += "<h4>术语命中</h4>";
+  if (!results.length) {
+    html += "<div class=\"empty\">没有找到匹配条目。</div>";
+  } else {
+    html += "<div class=\"search-hit-list\">";
+    results.forEach(function(item) {
+      var meta = item.metadata || {};
+      html += "<div class=\"search-hit-item\">";
+      html += "<div class=\"search-hit-head\"><strong>" + escapeHtml(item.term || item.name || "-") + "</strong><span class=\"search-score\">得分 " + escapeHtml(String(item.score || 0)) + "</span></div>";
+      html += "<div class=\"search-hit-meta\">";
+      html += badge(meta.domain);
+      html += "<span class=\"badge general\">" + escapeHtml(meta.shape || "unknown") + "</span>";
+      html += "<span class=\"badge general\">" + escapeHtml(item.source || "-") + "</span>";
+      html += "</div>";
+      if (meta.english || item.content) {
+        html += "<p>" + escapeHtml(meta.english || item.content || "") + "</p>";
+      }
+      html += "</div>";
+    });
+    html += "</div>";
+  }
+  html += "</div>";
+  html += "</div>";
+  html += "</div>";
+
+  $("search-results").innerHTML = html;
+}
+
 function doSearch() {
   var query = $("search-query").value.trim();
   if (!query) {
     toast("请输入检索关键词");
     return;
   }
-  $("search-results").innerHTML = "<div class=\"empty\">正在检索知识库。</div>";
+  $("search-results").innerHTML = "<div class=\"empty\"><strong>正在检索</strong><span>系统正在聚合术语命中、文本证据和 GraphRAG 回答。</span></div>";
   request("GET", "/api/search?q=" + encodeURIComponent(query)).then(function(data) {
-    var results = data.results || [];
-    if (!results.length) {
-      $("search-results").innerHTML = "<div class=\"empty\">没有找到匹配结果。</div>";
-      return;
-    }
-    var html = "<table><thead><tr><th>术语</th><th>英文名</th><th>学科</th><th>图元</th><th>得分</th><th>来源</th></tr></thead><tbody>";
-    results.forEach(function(item) {
-      var meta = item.metadata || {};
-      html += "<tr>";
-      html += "<td><strong>" + escapeHtml(item.term) + "</strong></td>";
-      html += "<td>" + escapeHtml(meta.english || "-") + "</td>";
-      html += "<td>" + badge(meta.domain) + "</td>";
-      html += "<td>" + escapeHtml(meta.shape || "-") + "</td>";
-      html += "<td>" + escapeHtml(item.score) + "</td>";
-      html += "<td>" + escapeHtml(item.source || "-") + "</td>";
-      html += "</tr>";
-    });
-    html += "</tbody></table>";
-    $("search-results").innerHTML = html;
+    renderSearchResults(data || {});
   }).catch(function(error) {
-    $("search-results").innerHTML = "<div class=\"empty\">检索失败：" + escapeHtml(error.message) + "</div>";
+    $("search-results").innerHTML = "<div class=\"empty\"><strong>检索失败</strong><span>" + escapeHtml(error.message) + "</span></div>";
   });
 }
 

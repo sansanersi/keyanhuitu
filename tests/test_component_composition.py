@@ -143,6 +143,72 @@ class ComponentCompositionTest(unittest.TestCase):
             self.assertEqual(plan["components"][0]["asset_source"], "bioicons")
             self.assertTrue(plan["components"][0]["svg_path"].endswith("2-cell_embryo.svg"))
 
+    def test_component_composer_hides_redundant_caption_text(self):
+        plan = {
+            "title": "Signal Pathway",
+            "layout": "hierarchical",
+            "style": "science",
+            "components": [
+                {
+                    "id": "egf_egfr",
+                    "name": "EGF配体结合EGFR受体",
+                    "type": "image_text",
+                    "image_key": "receptor",
+                    "caption": "EGF与EGFR的相互作用",
+                }
+            ],
+            "connections": [],
+        }
+
+        svg = ComponentComposer().render(plan, width=900, height=600)
+
+        self.assertIn("EGF配体结合EGFR受体", svg)
+        self.assertNotIn("EGF与EGFR的相互作用", svg)
+
+    def test_component_composer_hides_redundant_english_caption_text(self):
+        plan = {
+            "title": "Signal Pathway",
+            "layout": "hierarchical",
+            "style": "science",
+            "components": [
+                {
+                    "id": "egf_binding",
+                    "name": "EGF Receptor Binding",
+                    "type": "image_text",
+                    "image_key": "receptor",
+                    "caption": "EGF binding to EGFR",
+                }
+            ],
+            "connections": [],
+        }
+
+        svg = ComponentComposer().render(plan, width=900, height=600)
+
+        self.assertIn("EGF Receptor Bi…", svg)
+        self.assertNotIn("EGF binding to EGFR", svg)
+
+    def test_component_composer_hides_caption_by_default(self):
+        plan = {
+            "title": "Signal Pathway",
+            "layout": "hierarchical",
+            "style": "science",
+            "components": [
+                {
+                    "id": "nucleus_step",
+                    "name": "信号传递至细胞核",
+                    "type": "image_text",
+                    "image_key": "nucleus",
+                    "caption": "基因表达启动",
+                }
+            ],
+            "connections": [],
+        }
+
+        svg = ComponentComposer().render(plan, width=900, height=600)
+
+        self.assertIn("信号传递至细胞核", svg)
+        self.assertNotIn("基因表达启动", svg)
+
     def test_component_composer_wraps_dense_hierarchical_components(self):
         plan = {
             "title": "Dense pathway",

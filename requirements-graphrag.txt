@@ -1,0 +1,3 @@
+# Optional dependency for the text knowledge base pipeline.
+# Pinned to the version validated in this project on Windows + Ollama.
+graphrag==1.2.2

@@ -87,6 +87,29 @@ class KnowledgeDatabase:
             conn.commit()
             return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 
+    def get_document_by_filepath(self, filepath):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM documents WHERE filepath=?", (filepath,)).fetchone()
+            return dict(row) if row else None
+
+    def save_document(self, filename, filepath, file_type="", content="", vectorized=0):
+        existing = self.get_document_by_filepath(filepath)
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            if existing:
+                conn.execute(
+                    "UPDATE documents SET filename=?, file_type=?, content=?, vectorized=? WHERE id=?",
+                    (filename, file_type, content, vectorized, existing["id"]),
+                )
+                conn.commit()
+                return existing["id"]
+            conn.execute(
+                "INSERT INTO documents (filename, filepath, file_type, content, vectorized) VALUES (?,?,?,?,?)",
+                (filename, filepath, file_type, content, vectorized),
+            )
+            conn.commit()
+            return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
     def update_document_vector(self, did, content, vectorized=1):
         with closing(sqlite3.connect(self.db_path)) as conn:
             conn.execute("UPDATE documents SET content=?, vectorized=? WHERE id=?", (content, vectorized, did))
