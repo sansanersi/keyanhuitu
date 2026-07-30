@@ -1,9 +1,19 @@
 
-import json, os, sqlite3
+import json
+import os
+import sqlite3
 from contextlib import closing
 from typing import Dict, List
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "knowledge.db")
+
+def _default_db_path():
+    configured = os.environ.get("SCI_WEBAPP_DB_PATH", "").strip()
+    if configured:
+        return os.path.abspath(configured)
+    return os.path.join(os.path.dirname(__file__), "data", "knowledge.db")
+
+
+DB_PATH = _default_db_path()
 
 class KnowledgeDatabase:
     def __init__(self, db_path=None):
