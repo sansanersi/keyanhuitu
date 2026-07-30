@@ -16,11 +16,11 @@ from flask import Flask, jsonify, render_template, request
 try:
     from .database import KnowledgeDatabase
     from .document_processor import DocumentProcessor
-    from .services import DocumentService, DrawService, SearchService, SystemService
+    from .services import CatalogService, DocumentService, DrawService, SearchService, SystemService
 except ImportError:
     from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
-    from services import DocumentService, DrawService, SearchService, SystemService
+    from services import CatalogService, DocumentService, DrawService, SearchService, SystemService
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
@@ -48,6 +48,7 @@ text_kb = GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN)
 bioicons = BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main"))
 document_service = DocumentService(db, dp, text_kb, FOCUS_DOMAIN)
 search_service = SearchService(kb, text_kb, FOCUS_DOMAIN)
+catalog_service = CatalogService(lambda: db, lambda: kb, lambda: el, lambda: bioicons, FOCUS_DOMAIN)
 draw_service = DrawService(
     knowledge_base=kb,
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
@@ -144,34 +145,20 @@ def dashboard():
 def list_entries():
     domain = request.args.get("domain", "")
     search = request.args.get("search", "")
-    entries, total = db.list_entries(domain=domain, search=search)
-    return jsonify({"entries": entries, "total": total})
+    return jsonify(catalog_service.list_entries(domain=domain, search=search))
 
 
 @app.route("/api/entries", methods=["POST"])
 def add_entry():
-    data = request.json or {}
-    ok = db.add_entry(
-        name=data["name"],
-        english=data.get("english", ""),
-        domain=data.get("domain", ""),
-        category=data.get("category", ""),
-        shape=data.get("shape", ""),
-        color_scheme=data.get("color_scheme", []),
-        tags=data.get("tags", []),
-        description=data.get("description", ""),
-    )
-    return jsonify({"success": ok})
+    return jsonify(catalog_service.add_entry(request.json or {}))
 
 
 @app.route("/api/entries/<int:eid>", methods=["PUT", "DELETE"])
 def update_or_delete_entry(eid):
     if request.method == "DELETE":
-        db.delete_entry(eid)
-        return jsonify({"success": True})
+        return jsonify(catalog_service.delete_entry(eid))
 
-    db.update_entry(eid, **(request.json or {}))
-    return jsonify({"success": True})
+    return jsonify(catalog_service.update_entry(eid, request.json or {}))
 
 
 @app.route("/api/search")
@@ -182,64 +169,25 @@ def search_kb():
 
 @app.route("/api/domain/status")
 def domain_status():
-    return jsonify({
-        "focus_domain": kb.stats.get("focus_domain", FOCUS_DOMAIN),
-        "kb_terms": kb.stats["total_terms"],
-        "corpus_documents": kb.stats.get("corpus_documents", 0),
-        "bioicons_count": bioicons.count,
-        "available_domains": kb.vocabulary.domains,
-    })
+    return jsonify(catalog_service.domain_status())
 
 
 @app.route("/api/elements/suggest")
 def suggest_elements():
     text = request.args.get("text", "")
-    kb_items = []
-    for item in el.suggest(text, top_k=8):
-        data = item.to_dict()
-        data["source"] = "knowledge_base"
-        kb_items.append(data)
-
-    bioicon_items = []
-    for item in bioicons.suggest(text, top_k=8):
-        bioicon_items.append({
-            "name": item.get("name", ""),
-            "english_name": item.get("english_name", ""),
-            "domain": item.get("domain", "bioicons"),
-            "category": item.get("category", ""),
-            "shape": item.get("shape", "icon"),
-            "color_scheme": item.get("color_scheme", ["#4A90D9"]),
-            "description": item.get("description", ""),
-            "type": item.get("type", "bioicon"),
-            "tags": item.get("tags", []),
-            "score": item.get("score", 0),
-            "source": "bioicons",
-            "license": item.get("license", ""),
-            "author": item.get("author", ""),
-            "svg_path": item.get("svg_path", ""),
-        })
-
-    merged = []
-    seen = set()
-    for item in kb_items + bioicon_items:
-        key = (item.get("name", "").lower(), item.get("source", ""))
-        if key in seen:
-            continue
-        seen.add(key)
-        merged.append(item)
-    return jsonify({"elements": merged})
+    return jsonify(catalog_service.suggest_elements(text, top_k=8))
 
 
 @app.route("/api/bioicons/status")
 def bioicons_status():
-    return jsonify(bioicons.stats())
+    return jsonify(catalog_service.bioicons_status())
 
 
 @app.route("/api/bioicons/suggest")
 def suggest_bioicons():
     text = request.args.get("text", "")
     top_k = int(request.args.get("top_k", 8))
-    return jsonify({"icons": bioicons.suggest(text, top_k=top_k), "stats": bioicons.stats()})
+    return jsonify(catalog_service.suggest_bioicons(text, top_k=top_k))
 
 
 @app.route("/api/document/upload", methods=["POST"])
