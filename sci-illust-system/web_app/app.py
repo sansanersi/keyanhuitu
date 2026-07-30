@@ -195,14 +195,10 @@ def upload_document():
     if "file" not in request.files:
         return jsonify({"success": False, "error": "未上传文件"})
 
-    file = request.files["file"]
-    if file.filename == "":
+    result = document_service.upload_document(request.files["file"])
+    if not result.get("success") and result.get("error") == "empty_filename":
         return jsonify({"success": False, "error": "文件名为空"})
-
-    path = os.path.join(dp.upload_dir, file.filename)
-    file.save(path)
-    return jsonify(dp.process_file(path, file.filename))
-
+    return jsonify(result)
 
 @app.route("/api/documents")
 def list_documents():
@@ -287,17 +283,14 @@ def query_llm():
     text = data.get("text", "")
 
     try:
-        from ollama_integration.ollama_client import OllamaClient
-
-        client = OllamaClient(base_url=_ollama_base_url(), default_model=_ollama_default_model(), timeout=60)
-        response = client.chat(
-            [
-                {"role": "system", "content": "你是科研绘图专家。"},
-                {"role": "user", "content": text},
-            ],
-            model=data.get("model", "") or _ollama_default_model(),
+        return jsonify(
+            system_service.query_llm(
+                text=text,
+                model=data.get("model", ""),
+                base_url=_ollama_base_url(),
+                default_model=_ollama_default_model(),
+            )
         )
-        return jsonify({"response": response or "模型无响应", "source": "ollama"})
     except Exception as exc:
         return jsonify({"response": f"调用失败: {exc}", "source": "error"})
 

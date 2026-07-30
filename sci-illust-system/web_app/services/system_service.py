@@ -12,6 +12,7 @@ class SystemService:
         sync_uploaded_documents,
         get_ollama_models,
         web_mode_getter,
+        ollama_client_factory=None,
     ):
         self._get_db = database_getter
         self.kb = knowledge_base
@@ -21,6 +22,7 @@ class SystemService:
         self.sync_uploaded_documents = sync_uploaded_documents
         self.get_ollama_models = get_ollama_models
         self.web_mode_getter = web_mode_getter
+        self.ollama_client_factory = ollama_client_factory
 
     def dashboard(self):
         self.sync_uploaded_documents()
@@ -73,3 +75,21 @@ class SystemService:
             "default_model": default_model,
             "base_url": base_url,
         }
+
+    def query_llm(self, text, model, base_url, default_model):
+        client = self._ollama_client_factory()(base_url=base_url, default_model=default_model, timeout=60)
+        response = client.chat(
+            [
+                {"role": "system", "content": "你是科研绘图专家。"},
+                {"role": "user", "content": text},
+            ],
+            model=model or default_model,
+        )
+        return {"response": response or "模型无响应", "source": "ollama"}
+
+    def _ollama_client_factory(self):
+        if self.ollama_client_factory:
+            return self.ollama_client_factory
+        from ollama_integration.ollama_client import OllamaClient
+
+        return OllamaClient
