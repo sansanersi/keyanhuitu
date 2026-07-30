@@ -1,15 +1,22 @@
-"""科研配图管理系统 - Flask 应用。"""
+"""科研配图管理系统 Web 应用。"""
+
 import os
 import sys
 
 BASE_SITE = r"C:\ProgramData\anaconda3\Lib\site-packages"
-if os.path.isdir(BASE_SITE) and BASE_SITE not in sys.path:
-    sys.path.append(BASE_SITE)
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-for path in [os.path.dirname(BASE_DIR), os.path.dirname(os.path.dirname(BASE_DIR))]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
+
+
+def _configure_import_paths():
+    if os.path.isdir(BASE_SITE) and BASE_SITE not in sys.path:
+        sys.path.append(BASE_SITE)
+
+    for path in (os.path.dirname(BASE_DIR), os.path.dirname(os.path.dirname(BASE_DIR))):
+        if path not in sys.path:
+            sys.path.insert(0, path)
+
+
+_configure_import_paths()
 
 from flask import Flask, jsonify, render_template, request
 
@@ -21,6 +28,7 @@ except ImportError:
     from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
     from services import CatalogService, DocumentService, DrawService, SearchService, SystemService
+
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
@@ -35,27 +43,34 @@ CORPUS_PATHS = [
     os.path.join(BASE_DIR, "data", "corpus"),
 ]
 
-kb = KnowledgeBase(
-    vocab_path=os.path.join(BASE_DIR, "data", "domain_vocab.json"),
-    color_scheme_path=os.path.join(BASE_DIR, "data", "color_schemes", "default_scheme.json"),
-    focus_domain=FOCUS_DOMAIN,
-    corpus_paths=CORPUS_PATHS,
-)
-el = ElementLibrary(kb.vocabulary)
-db = KnowledgeDatabase()
-dp = DocumentProcessor()
-text_kb = GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN)
-bioicons = BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main"))
-document_service = DocumentService(db, dp, text_kb, FOCUS_DOMAIN)
-search_service = SearchService(kb, text_kb, FOCUS_DOMAIN)
-catalog_service = CatalogService(lambda: db, lambda: kb, lambda: el, lambda: bioicons, FOCUS_DOMAIN)
-draw_service = DrawService(
-    knowledge_base=kb,
-    pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
-)
+
+def _build_runtime_state():
+    knowledge_base = KnowledgeBase(
+        vocab_path=os.path.join(BASE_DIR, "data", "domain_vocab.json"),
+        color_scheme_path=os.path.join(BASE_DIR, "data", "color_schemes", "default_scheme.json"),
+        focus_domain=FOCUS_DOMAIN,
+        corpus_paths=CORPUS_PATHS,
+    )
+    return {
+        "kb": knowledge_base,
+        "el": ElementLibrary(knowledge_base.vocabulary),
+        "db": KnowledgeDatabase(),
+        "dp": DocumentProcessor(),
+        "text_kb": GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN),
+        "bioicons": BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main")),
+    }
 
 
-def import_builtin():
+RUNTIME = _build_runtime_state()
+kb = RUNTIME["kb"]
+el = RUNTIME["el"]
+db = RUNTIME["db"]
+dp = RUNTIME["dp"]
+text_kb = RUNTIME["text_kb"]
+bioicons = RUNTIME["bioicons"]
+
+
+def _import_builtin_entries():
     if db.stats["entries"] != 0:
         return
 
@@ -71,13 +86,6 @@ def import_builtin():
                 color_scheme=metadata["color_scheme"],
                 tags=metadata["tags"],
             )
-
-
-import_builtin()
-
-
-def sync_uploaded_documents():
-    return document_service.sync_uploaded_documents()
 
 
 def _ollama_base_url():
@@ -114,16 +122,25 @@ def _web_mode():
     return os.environ.get("SCI_WEB_MODE", "stable").strip().lower() or "stable"
 
 
+document_service = DocumentService(lambda: db, lambda: dp, lambda: text_kb, FOCUS_DOMAIN)
+search_service = SearchService(kb, text_kb, FOCUS_DOMAIN)
+catalog_service = CatalogService(lambda: db, lambda: kb, lambda: el, lambda: bioicons, FOCUS_DOMAIN)
+draw_service = DrawService(
+    knowledge_base=kb,
+    pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
+)
 system_service = SystemService(
     database_getter=lambda: db,
     knowledge_base=kb,
     text_kb_manager=text_kb,
     bioicons_library=bioicons,
     focus_domain=FOCUS_DOMAIN,
-    sync_uploaded_documents=sync_uploaded_documents,
+    sync_uploaded_documents=lambda: document_service.sync_uploaded_documents(),
     get_ollama_models=lambda: _get_ollama_models(),
     web_mode_getter=_web_mode,
 )
+
+_import_builtin_entries()
 
 
 @app.route("/")
@@ -200,6 +217,7 @@ def upload_document():
         return jsonify({"success": False, "error": "文件名为空"})
     return jsonify(result)
 
+
 @app.route("/api/documents")
 def list_documents():
     return jsonify(document_service.list_documents())
@@ -231,6 +249,7 @@ def delete_document(did):
 @app.route("/api/ollama/status")
 def ollama_status():
     return jsonify(system_service.ollama_status(_ollama_base_url(), _ollama_default_model()))
+
 
 @app.route("/api/ollama/config", methods=["GET", "POST"])
 def ollama_config():
@@ -276,6 +295,7 @@ def draw():
     if not response.get("success") and response.get("error") == "missing_text":
         return jsonify({"success": False, "error": "请输入绘图需求"})
     return jsonify(response)
+
 
 @app.route("/api/query", methods=["POST"])
 def query_llm():
