@@ -32,6 +32,7 @@ except ImportError:
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
 from knowledge_base.kb_core import KnowledgeBase
+from orchestrator.asset_resolver import AssetResolver
 from text_kb.graphrag_manager import GraphRAGTextKBManager
 
 app = Flask(__name__)
@@ -128,6 +129,7 @@ catalog_service = CatalogService(lambda: db, lambda: kb, lambda: el, lambda: bio
 draw_service = DrawService(
     knowledge_base=kb,
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
+    asset_resolver_factory=lambda: AssetResolver(element_library=el, bioicons=bioicons),
 )
 system_service = SystemService(
     database_getter=lambda: db,

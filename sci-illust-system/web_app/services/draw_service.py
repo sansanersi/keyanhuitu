@@ -9,11 +9,13 @@ class DrawService:
         knowledge_base,
         pipeline_factory,
         analyzer_factory=None,
+        asset_resolver_factory=None,
         timestamp_factory=None,
     ):
         self.kb = knowledge_base
         self.pipeline_factory = pipeline_factory
         self.analyzer_factory = analyzer_factory
+        self.asset_resolver_factory = asset_resolver_factory
         self.timestamp_factory = timestamp_factory or (lambda: datetime.now())
 
     def draw(self, payload):
@@ -120,6 +122,7 @@ class DrawService:
             canvas_width=canvas_width,
             canvas_height=canvas_height,
         )
+        workflow = self._asset_resolver().resolve_workflow(workflow)
         return {"success": True, "workflow": workflow, "errors": validate_workflow(workflow)}
 
     def _analyzer(self):
@@ -128,6 +131,13 @@ class DrawService:
         from orchestrator.text_analyzer import RequirementAnalyzer
 
         return RequirementAnalyzer(self.kb)
+
+    def _asset_resolver(self):
+        if self.asset_resolver_factory:
+            return self.asset_resolver_factory()
+        from orchestrator.asset_resolver import AssetResolver
+
+        return AssetResolver()
 
     def _render(self, text, model, figure_type, style, layout, canvas_width, canvas_height):
         pipeline = self.pipeline_factory()

@@ -66,6 +66,37 @@ class DrawServiceTest(unittest.TestCase):
         self.assertEqual(result["workflow"]["composition"]["canvas"], {"width": 900, "height": 600})
         self.assertEqual(result["errors"], [])
 
+    def test_workflow_enriches_elements_with_asset_matches(self):
+        class FakeAnalyzer:
+            def analyze(self, text):
+                return {
+                    "domain": "biology",
+                    "figure_type": "pathway_diagram",
+                    "layout": "hierarchical",
+                    "style": "science",
+                    "view_type": "2d_top",
+                    "elements": [{"id": "el_0", "name": "EGFR", "type": "receptor", "shape": "transmembrane"}],
+                    "relations": [],
+                }
+
+        class FakeAssetResolver:
+            def resolve_workflow(self, workflow):
+                workflow["elements"][0]["asset_matches"] = [{"source": "workflow_hint", "name": "EGFR"}]
+                workflow["elements"][0]["selected_asset"] = {"source": "workflow_hint", "name": "EGFR"}
+                return workflow
+
+        service = DrawService(
+            knowledge_base=object(),
+            pipeline_factory=lambda: None,
+            analyzer_factory=lambda: FakeAnalyzer(),
+            asset_resolver_factory=lambda: FakeAssetResolver(),
+        )
+
+        result = service.workflow({"text": "EGFR"})
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["workflow"]["elements"][0]["selected_asset"]["source"], "workflow_hint")
+
     def test_draw_uses_component_mode_response_shape(self):
         class FakePipeline:
             def process_components(self, *args, **kwargs):

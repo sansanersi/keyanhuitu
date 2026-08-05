@@ -35,6 +35,8 @@ class WorkflowRouteTest(unittest.TestCase):
         self.assertEqual(payload["workflow"]["composition"]["canvas"], {"width": 900, "height": 600})
         self.assertEqual(payload["errors"], [])
         self.assertGreaterEqual(len(payload["workflow"]["elements"]), 3)
+        self.assertIn("selected_asset", payload["workflow"]["elements"][0])
+        self.assertGreaterEqual(len(payload["workflow"]["elements"][0]["asset_matches"]), 1)
 
 
 if __name__ == "__main__":
