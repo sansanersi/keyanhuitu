@@ -42,6 +42,8 @@ class CorePipelineTest(unittest.TestCase):
         self.assertIn('class="element-label"', result["svg"])
         self.assertIn('transform="translate(', result["svg"])
         self.assertEqual(result["analysis"]["layout"], "hierarchical")
+        self.assertEqual(result["workflow"]["schema_version"], "1.0")
+        self.assertEqual(result["workflow"]["composition"]["canvas"], {"width": 900, "height": 600})
 
 
 if __name__ == "__main__":

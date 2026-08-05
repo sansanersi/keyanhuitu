@@ -4,6 +4,7 @@ from drawing.renderer import FigureElement, FigureRelation, ScientificIllustrati
 from knowledge_base.kb_core import KnowledgeBase
 from orchestrator.component_planner import ComponentPlanner
 from orchestrator.text_analyzer import RequirementAnalyzer
+from orchestrator.workflow_schema import workflow_from_analysis
 
 
 class SciIllustPipeline:
@@ -39,6 +40,7 @@ class SciIllustPipeline:
         figure.add_elements(elements)
         figure.add_relations(relations)
 
+        workflow = workflow_from_analysis(text, analysis, canvas_width=canvas_width, canvas_height=canvas_height)
         svg = figure.render(layout_type) if auto_render else ""
         return {
             "status": "completed",
@@ -46,6 +48,7 @@ class SciIllustPipeline:
             "elements": analysis.get("elements", []),
             "relations": relations,
             "analysis": analysis,
+            "workflow": workflow,
             "figure_info": figure.info,
         }
 

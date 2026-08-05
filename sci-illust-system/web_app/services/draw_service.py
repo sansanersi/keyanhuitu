@@ -102,6 +102,26 @@ class DrawService:
             "timestamp": str(self.timestamp_factory()),
         }
 
+    def workflow(self, payload):
+        data = payload or {}
+        text = (data.get("text", "") or "").strip()
+        if not text:
+            return {"success": False, "error": "missing_text"}
+
+        canvas_width = int(data.get("canvas_width", 1000))
+        canvas_height = int(data.get("canvas_height", 700))
+        analysis = self._analyzer().analyze(text)
+
+        from orchestrator.workflow_schema import validate_workflow, workflow_from_analysis
+
+        workflow = workflow_from_analysis(
+            text,
+            analysis,
+            canvas_width=canvas_width,
+            canvas_height=canvas_height,
+        )
+        return {"success": True, "workflow": workflow, "errors": validate_workflow(workflow)}
+
     def _analyzer(self):
         if self.analyzer_factory:
             return self.analyzer_factory()

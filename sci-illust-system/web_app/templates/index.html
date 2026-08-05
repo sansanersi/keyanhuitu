@@ -852,6 +852,52 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.workflow-preview {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(10, 20, 36, .72);
+}
+.workflow-preview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.workflow-preview-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.workflow-preview-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.workflow-preview-card {
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid rgba(122,178,255,.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+.workflow-preview-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.workflow-preview-card span,
+.workflow-preview-card li {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.workflow-preview-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
 .tag-list {
   display: flex;
   flex-wrap: wrap;
@@ -1002,7 +1048,7 @@ to { opacity: 1; transform: translateY(0) scale(1); }
   .search-hero,
   .search-layout { grid-template-columns: 1fr; }
   .workflow-grid { grid-template-columns: 1fr 1fr; }
-  .analysis, .form-row { grid-template-columns: 1fr; }
+  .analysis, .form-row, .workflow-preview-body { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .workflow-grid { grid-template-columns: 1fr; }
@@ -1115,6 +1161,7 @@ to { opacity: 1; transform: translateY(0) scale(1); }
               </div>
               <div class="toolbar" style="margin:12px 0 0">
                 <button class="btn-primary" type="button" id="draw-submit">生成配图</button>
+                <button class="btn" type="button" id="workflow-submit">生成流程</button>
                 <button class="btn" type="button" id="draw-example">填入示例</button>
               </div>
             </div>
@@ -1139,6 +1186,18 @@ to { opacity: 1; transform: translateY(0) scale(1); }
               <div>
                 <div class="form-label">关系</div>
                 <div class="tag-list" id="draw-relations"><span class="muted">暂无</span></div>
+              </div>
+            </div>
+            <div class="workflow-preview" id="workflow-preview">
+              <div class="workflow-preview-head">
+                <div>
+                  <h3 class="workflow-preview-title">AI 绘图流程</h3>
+                  <div class="muted" id="workflow-summary">等待生成结构化流程</div>
+                </div>
+                <span class="badge" id="workflow-version">schema</span>
+              </div>
+              <div class="workflow-preview-body" id="workflow-preview-body">
+                <div class="empty"><strong>暂无流程</strong><span>点击“生成流程”后，这里会显示元素、关系、构图和质量检查。</span></div>
               </div>
             </div>
           </div>
@@ -1612,6 +1671,86 @@ function renderTags(targetId, items, emptyText) {
   }).join("");
 }
 
+function renderWorkflow(workflow, errors) {
+  if (!workflow) {
+    $("workflow-summary").textContent = "等待生成结构化流程";
+    $("workflow-version").textContent = "schema";
+    $("workflow-preview-body").innerHTML = "<div class=\"empty\"><strong>暂无流程</strong><span>点击“生成流程”后，这里会显示元素、关系、构图和质量检查。</span></div>";
+    return;
+  }
+  var task = workflow.task || {};
+  var composition = workflow.composition || {};
+  var canvas = composition.canvas || {};
+  var elements = workflow.elements || [];
+  var relations = workflow.relations || [];
+  var checks = workflow.quality_checks || [];
+  var spatialRules = composition.spatial_rules || [];
+  $("workflow-summary").textContent = task.normalized_goal || "已生成结构化绘图流程";
+  $("workflow-version").textContent = "v" + (workflow.schema_version || "1.0");
+  var html = "";
+  html += workflowCard("任务", [
+    "领域：" + domainLabel(workflow.domain || "general"),
+    "图类型：" + (workflow.figure_type || "schematic_diagram"),
+    "画布：" + (canvas.width || "-") + " x " + (canvas.height || "-")
+  ]);
+  html += workflowCard("元素", elements.slice(0, 6).map(function(item) {
+    return (item.name || item.id) + " / " + (item.role || "secondary");
+  }));
+  html += workflowCard("关系", relations.slice(0, 6).map(function(item) {
+    return (item.source || "-") + " → " + (item.target || "-") + "：" + (item.label || item.type || "关联");
+  }));
+  html += workflowCard("构图", [
+    "布局：" + (composition.layout || "hierarchical"),
+    "视角：" + (composition.view || "2d_top"),
+    "规则：" + spatialRules.length + " 条"
+  ]);
+  html += workflowCard("质量检查", checks.slice(0, 4));
+  if (errors && errors.length) {
+    html += workflowCard("校验提示", errors.slice(0, 4));
+  }
+  $("workflow-preview-body").innerHTML = html;
+}
+
+function workflowCard(title, items) {
+  var list = items && items.length ? items : ["暂无"];
+  return "<div class=\"workflow-preview-card\"><strong>" + escapeHtml(title) + "</strong><ul>" + list.map(function(item) {
+    return "<li>" + escapeHtml(String(item)) + "</li>";
+  }).join("") + "</ul></div>";
+}
+
+function workflowPayload() {
+  var size = $("draw-size-select").value.split("x");
+  return {
+    text: $("draw-input").value.trim(),
+    canvas_width: parseInt(size[0], 10),
+    canvas_height: parseInt(size[1], 10)
+  };
+}
+
+function generateWorkflow() {
+  var payload = workflowPayload();
+  if (!payload.text) {
+    toast("请先输入科研绘图需求");
+    $("draw-input").focus();
+    return;
+  }
+  var button = $("workflow-submit");
+  button.disabled = true;
+  button.textContent = "生成中";
+  $("workflow-summary").textContent = "正在生成结构化流程";
+  request("POST", "/api/workflow", payload).then(function(data) {
+    if (!data.success) throw new Error(data.error || "流程生成失败");
+    renderWorkflow(data.workflow, data.errors || []);
+    toast("AI 绘图流程已生成");
+  }).catch(function(error) {
+    $("workflow-summary").textContent = "流程生成失败";
+    $("workflow-preview-body").innerHTML = "<div class=\"empty\"><strong>流程生成失败</strong><span>" + escapeHtml(error.message) + "</span></div>";
+  }).finally(function() {
+    button.disabled = false;
+    button.textContent = "生成流程";
+  });
+}
+
 function generateDrawing() {
   var text = $("draw-input").value.trim();
   if (!text) {
@@ -1646,6 +1785,7 @@ function generateDrawing() {
     $("draw-summary").textContent = "学科：" + domainLabel(analysis.domain) + "；图类型：" + (analysis.figure_type || "示意图") + "；画布：" + (analysis.canvas || "");
     renderTags("draw-elements", data.elements || [], "未识别到元素");
     renderTags("draw-relations", data.relations || [], "暂无关系");
+    renderWorkflow(data.workflow, []);
     toast("SVG 已生成");
   }).catch(function(error) {
     $("draw-summary").textContent = "生成失败";
@@ -1917,6 +2057,7 @@ $("entry-search").addEventListener("keydown", function(event) {
   if (event.key === "Enter") loadEntries();
 });
 $("draw-submit").addEventListener("click", generateDrawing);
+$("workflow-submit").addEventListener("click", generateWorkflow);
 $("draw-example").addEventListener("click", function() {
   $("draw-input").value = "EGF 配体结合 EGFR 受体，激活 RAS 激酶，并将信号传递到细胞核，引发基因转录。";
 });

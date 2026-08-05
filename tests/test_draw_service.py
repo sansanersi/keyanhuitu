@@ -20,6 +20,52 @@ class DrawServiceTest(unittest.TestCase):
         self.assertEqual(result["success"], False)
         self.assertEqual(result["error"], "missing_text")
 
+    def test_workflow_returns_missing_text_error_for_empty_payload(self):
+        service = DrawService(knowledge_base=None, pipeline_factory=lambda: None)
+
+        result = service.workflow({})
+
+        self.assertEqual(result["success"], False)
+        self.assertEqual(result["error"], "missing_text")
+
+    def test_workflow_returns_valid_schema(self):
+        class FakeAnalyzer:
+            def analyze(self, text):
+                return {
+                    "domain": "biology",
+                    "figure_type": "pathway_diagram",
+                    "layout": "hierarchical",
+                    "style": "science",
+                    "view_type": "2d_top",
+                    "elements": [
+                        {"id": "el_0", "name": "EGF", "type": "protein", "shape": "rounded_rect"},
+                        {"id": "el_1", "name": "EGFR", "type": "receptor", "shape": "transmembrane"},
+                    ],
+                    "relations": [
+                        {
+                            "source": "el_0",
+                            "target": "el_1",
+                            "type": "activates",
+                            "relation_type": "activates",
+                            "label": "激活",
+                            "directed": True,
+                        }
+                    ],
+                }
+
+        service = DrawService(
+            knowledge_base=object(),
+            pipeline_factory=lambda: None,
+            analyzer_factory=lambda: FakeAnalyzer(),
+        )
+
+        result = service.workflow({"text": "EGF activates EGFR", "canvas_width": 900, "canvas_height": 600})
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["workflow"]["schema_version"], "1.0")
+        self.assertEqual(result["workflow"]["composition"]["canvas"], {"width": 900, "height": 600})
+        self.assertEqual(result["errors"], [])
+
     def test_draw_uses_component_mode_response_shape(self):
         class FakePipeline:
             def process_components(self, *args, **kwargs):

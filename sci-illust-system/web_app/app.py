@@ -297,6 +297,14 @@ def draw():
     return jsonify(response)
 
 
+@app.route("/api/workflow", methods=["POST"])
+def workflow():
+    response = draw_service.workflow(request.json or {})
+    if not response.get("success") and response.get("error") == "missing_text":
+        return jsonify({"success": False, "error": "请输入绘图需求"})
+    return jsonify(response)
+
+
 @app.route("/api/query", methods=["POST"])
 def query_llm():
     data = request.json or {}
