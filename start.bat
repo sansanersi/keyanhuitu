@@ -12,7 +12,7 @@ if not defined PYTHON_EXE (
   echo Python executable not found.
   exit /b 1
 )
-for /f "delims=" %%P in ('powershell -NoProfile -Command "Get-CimInstance Win32_Process ^| Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -like '*keyanhuitu*sci-illust-system\\web_app\\app.py*' } ^| Select-Object -ExpandProperty ProcessId"') do (
+for /f "delims=" %%P in ('powershell -NoProfile -Command "Get-CimInstance Win32_Process ^| Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -like '*sci-illust-system\\web_app\\app.py*' } ^| Select-Object -ExpandProperty ProcessId"') do (
   taskkill /PID %%P /F >nul 2>nul
 )
 "%PYTHON_EXE%" sci-illust-system\web_app\app.py

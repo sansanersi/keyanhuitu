@@ -1343,13 +1343,20 @@ function toast(message) {
   setTimeout(function() { el.classList.remove("show"); }, 2400);
 }
 
+function apiUrl(url) {
+  if (!url || url.indexOf("/api/") !== 0) return url;
+  var isHttp = location.protocol === "http:" || location.protocol === "https:";
+  var isAppServer = isHttp && /^(127\.0\.0\.1|localhost)$/.test(location.hostname) && location.port === "5000";
+  return isAppServer ? url : "http://127.0.0.1:5000" + url;
+}
+
 function request(method, url, body) {
   var options = { method: method, headers: {} };
   if (body) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
-  return fetch(url, options).then(function(response) {
+  return fetch(apiUrl(url), options).then(function(response) {
     if (!response.ok) throw new Error("HTTP " + response.status);
     return response.json();
   });
@@ -1862,7 +1869,7 @@ function uploadDocument() {
   form.append("file", file);
   $("doc-upload-btn").disabled = true;
   $("doc-upload-btn").textContent = "上传中";
-  fetch("/api/document/upload", { method: "POST", body: form })
+  fetch(apiUrl("/api/document/upload"), { method: "POST", body: form })
     .then(function(response) {
       if (!response.ok) throw new Error("HTTP " + response.status);
       return response.json();

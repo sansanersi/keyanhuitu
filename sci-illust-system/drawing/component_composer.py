@@ -39,14 +39,23 @@ class ComponentComposer:
         component_map = {component["id"]: component for component in components}
         parts = [
             "<defs>",
+            "<linearGradient id=\"figure-bg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">",
+            "<stop offset=\"0%\" stop-color=\"#F8FBFF\"/>",
+            "<stop offset=\"100%\" stop-color=\"#EEF6F9\"/>",
+            "</linearGradient>",
+            "<filter id=\"soft-shadow\" x=\"-20%\" y=\"-20%\" width=\"140%\" height=\"150%\">",
+            "<feDropShadow dx=\"0\" dy=\"8\" stdDeviation=\"8\" flood-color=\"#1D3557\" flood-opacity=\"0.12\"/>",
+            "</filter>",
             "<marker id=\"component-arrow\" markerWidth=\"10\" markerHeight=\"7\" refX=\"9\" refY=\"3.5\" orient=\"auto\">",
-            "<polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#64748B\"/>",
+            "<polygon points=\"0 0, 10 3.5, 0 7\" fill=\"#5D7594\"/>",
             "</marker>",
             "</defs>",
-            "<rect width=\"100%\" height=\"100%\" rx=\"8\" fill=\"#FFFFFF\"/>",
-            "<text x=\"28\" y=\"32\" font-size=\"16\" font-weight=\"700\" fill=\"#172033\">"
+            "<rect class=\"figure-background\" width=\"100%\" height=\"100%\" rx=\"8\" fill=\"url(#figure-bg)\"/>",
+            "<path d=\"M36 520 C190 454, 300 540, 470 474 S732 430, 858 502\" fill=\"none\" stroke=\"#DDEBF2\" stroke-width=\"22\" stroke-linecap=\"round\" opacity=\"0.55\"/>",
+            "<text x=\"34\" y=\"38\" font-size=\"18\" font-weight=\"700\" fill=\"#172033\">"
             + escape(plan.get("title", "科研配图"))
             + "</text>",
+            "<line x1=\"34\" y1=\"52\" x2=\"" + str(max(width - 34, 34)) + "\" y2=\"52\" stroke=\"#D8E6EF\" stroke-width=\"1\"/>",
         ]
         parts.extend(self._render_connections(connections, component_map))
         for component in components:
@@ -176,16 +185,23 @@ class ComponentComposer:
                 + self._num(x2)
                 + " "
                 + self._num(y2)
-                + "\" fill=\"none\" stroke=\"#64748B\" stroke-width=\"1.8\" marker-end=\"url(#component-arrow)\"/>"
+                + "\" fill=\"none\" stroke=\"#5D7594\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\"0.86\" marker-end=\"url(#component-arrow)\"/>"
             )
             label = connection.get("label")
             if label:
+                parts.append(
+                    "<rect class=\"connection-label-bg\" x=\""
+                    + self._num((x1 + x2) / 2 - 28)
+                    + "\" y=\""
+                    + self._num((y1 + y2) / 2 - 24)
+                    + "\" width=\"56\" height=\"18\" rx=\"9\" fill=\"#FFFFFF\" opacity=\"0.84\"/>"
+                )
                 parts.append(
                     "<text class=\"connection-label\" x=\""
                     + self._num((x1 + x2) / 2)
                     + "\" y=\""
                     + self._num((y1 + y2) / 2 - 10)
-                    + "\" text-anchor=\"middle\" font-size=\"11\" fill=\"#475569\">"
+                    + "\" text-anchor=\"middle\" font-size=\"11\" font-weight=\"600\" fill=\"#3E5872\">"
                     + escape(str(label))
                     + "</text>"
                 )
@@ -220,11 +236,16 @@ class ComponentComposer:
             + ","
             + self._num(y)
             + ")\">"
-            + "<rect class=\"component-card\" width=\""
+            + "<rect class=\"component-shell\" width=\""
             + str(width)
             + "\" height=\""
             + str(height)
-            + "\" rx=\"10\" fill=\"#F8FBFF\" stroke=\"#CFE0F3\"/>"
+            + "\" rx=\"14\" fill=\"#FFFFFF\" stroke=\"#C9DCE8\" filter=\"url(#soft-shadow)\"/>"
+            + "<rect class=\"component-card\" x=\"1\" y=\"1\" width=\""
+            + str(width - 2)
+            + "\" height=\""
+            + str(height - 2)
+            + "\" rx=\"13\" fill=\"#FFFFFF\" stroke=\"#EEF4F8\"/>"
             + "<g class=\"component-visual\" transform=\"translate("
             + self._num(visual_x)
             + ","
@@ -236,7 +257,7 @@ class ComponentComposer:
             + self._num(width / 2)
             + "\" y=\""
             + self._num(height - 30)
-            + "\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#172033\">"
+            + "\" text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"#1E2F45\">"
             + escape(title)
             + "</text>"
         ]

@@ -112,7 +112,10 @@ class ComponentCompositionTest(unittest.TestCase):
 
         svg = ComponentComposer().render(plan, width=900, height=600)
 
+        self.assertIn('class="figure-background"', svg)
+        self.assertIn('id="soft-shadow"', svg)
         self.assertIn('class="image-text-component"', svg)
+        self.assertIn('class="component-shell"', svg)
         self.assertIn('class="component-visual"', svg)
         self.assertIn('class="component-title"', svg)
         self.assertIn('marker-end="url(#component-arrow)"', svg)

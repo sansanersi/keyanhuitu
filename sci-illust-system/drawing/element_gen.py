@@ -45,7 +45,7 @@ class SVGElementGenerator:
 
     def svg_circle(self, n, c, w, h, fill):
         r = min(w, h) / 2 - 3
-        return "<circle id=\"" + n + "\" cx=\"" + str(w/2) + "\" cy=\"" + str(h/2) + "\" r=\"" + str(r) + "\" fill=\"" + fill + "\" stroke=\"#333\" stroke-width=\"1.5\"/>"
+        return "<g id=\"" + n + "\"><circle cx=\"" + str(w/2) + "\" cy=\"" + str(h/2) + "\" r=\"" + str(r) + "\" fill=\"" + fill + "\" stroke=\"" + c[0] + "\" stroke-width=\"1.4\"/><circle cx=\"" + str(w/2 - r*0.28) + "\" cy=\"" + str(h/2 - r*0.28) + "\" r=\"" + str(r*0.28) + "\" fill=\"#FFFFFF\" opacity=\"0.45\"/></g>"
 
     def _circle(self, n, c, w, h):
         return self.svg_circle(n, c, w, h, c[0] + "30")
@@ -63,12 +63,13 @@ class SVGElementGenerator:
         return "<g id=\"" + n + "\">" + "".join(parts) + "</g>"
 
     def _bean(self, n, c, w, h):
-        return "<g id=\"" + n + "\"><ellipse cx=\"" + str(w/2) + "\" cy=\"" + str(h/2) + "\" rx=\"" + str(w/2-2) + "\" ry=\"" + str(h/2-2) + "\" fill=\"" + c[0] + "20\" stroke=\"" + c[0] + "\" stroke-width=\"1.5\"/></g>"
+        return "<g id=\"" + n + "\"><ellipse cx=\"" + str(w/2) + "\" cy=\"" + str(h/2) + "\" rx=\"" + str(w/2-2) + "\" ry=\"" + str(h/2-3) + "\" fill=\"" + c[0] + "24\" stroke=\"" + c[0] + "\" stroke-width=\"1.4\"/><path d=\"M" + str(w*0.24) + "," + str(h*0.52) + " C" + str(w*0.4) + "," + str(h*0.35) + " " + str(w*0.58) + "," + str(h*0.68) + " " + str(w*0.76) + "," + str(h*0.48) + "\" fill=\"none\" stroke=\"" + c[0] + "\" stroke-width=\"1.2\" opacity=\"0.75\"/></g>"
 
     def _transmembrane(self, n, c, w, h):
         parts = []
+        parts.append("<rect x=\"" + str(w/2-23) + "\" y=\"" + str(h/2-6) + "\" width=\"46\" height=\"12\" rx=\"6\" fill=\"#DDE8EF\" opacity=\"0.9\"/>")
         for i in range(3):
-            parts.append("<rect x=\"" + str(w/2-10+i*10) + "\" y=\"5\" width=\"12\" height=\"" + str(h-10) + "\" rx=\"6\" fill=\"" + c[0] + "30\" stroke=\"" + c[0] + "\" stroke-width=\"1.5\"/>")
+            parts.append("<rect x=\"" + str(w/2-13+i*10) + "\" y=\"5\" width=\"10\" height=\"" + str(h-10) + "\" rx=\"5\" fill=\"" + c[0] + "35\" stroke=\"" + c[0] + "\" stroke-width=\"1.3\"/>")
         return "<g id=\"" + n + "\">" + "".join(parts) + "</g>"
 
     def _triangle_down(self, n, c, w, h):
@@ -76,7 +77,7 @@ class SVGElementGenerator:
         return "<polygon id=\"" + n + "\" points=\"" + pts + "\" fill=\"" + c[0] + "40\" stroke=\"" + c[0] + "\" stroke-width=\"1.5\"/>"
 
     def _rounded_rect(self, n, c, w, h):
-        return "<rect id=\"" + n + "\" x=\"5\" y=\"5\" width=\"" + str(w-10) + "\" height=\"" + str(h-10) + "\" rx=\"8\" ry=\"8\" fill=\"" + c[0] + "30\" stroke=\"" + c[0] + "\" stroke-width=\"1.5\"/>"
+        return "<g id=\"" + n + "\"><rect x=\"5\" y=\"5\" width=\"" + str(w-10) + "\" height=\"" + str(h-10) + "\" rx=\"12\" ry=\"12\" fill=\"" + c[0] + "24\" stroke=\"" + c[0] + "\" stroke-width=\"1.4\"/><path d=\"M" + str(w*0.25) + "," + str(h*0.42) + " C" + str(w*0.38) + "," + str(h*0.25) + " " + str(w*0.62) + "," + str(h*0.7) + " " + str(w*0.76) + "," + str(h*0.48) + "\" fill=\"none\" stroke=\"" + c[0] + "\" stroke-width=\"1.1\" opacity=\"0.58\"/></g>"
 
     def _hexagon_ring(self, n, c, w, h):
         pts = []
@@ -101,7 +102,7 @@ class SVGElementGenerator:
         return "<path id=\"" + n + "\" d=\"M" + str(w/2) + "," + str(h-5) + " Q5," + str(h/2) + "," + str(w/2) + ",5 Q" + str(w-5) + "," + str(h/2) + "," + str(w/2) + "," + str(h-5) + "Z\" fill=\"" + c[0] + "\" stroke=\"" + (c[1] if len(c)>1 else c[0]) + "\" stroke-width=\"1.5\"/>"
 
     def _double_helix(self, n, c, w, h):
-        return "<g id=\"" + n + "\"><path d=\"M10,5 Q" + str(w/2) + "," + str(h-15) + "," + str(w-10) + ",5\" fill=\"none\" stroke=\"" + c[0] + "\" stroke-width=\"1.5\"/><path d=\"M10," + str(h-5) + " Q" + str(w/2) + ",15," + str(w-10) + "," + str(h-5) + "\" fill=\"none\" stroke=\"" + (c[1] if len(c)>1 else c[0]) + "\" stroke-width=\"1.5\"/></g>"
+        return "<g id=\"" + n + "\"><path d=\"M10,5 Q" + str(w/2) + "," + str(h-15) + "," + str(w-10) + ",5\" fill=\"none\" stroke=\"" + c[0] + "\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M10," + str(h-5) + " Q" + str(w/2) + ",15," + str(w-10) + "," + str(h-5) + "\" fill=\"none\" stroke=\"" + (c[1] if len(c)>1 else c[0]) + "\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"" + str(h*0.28) + "\" x2=\"" + str(w-14) + "\" y2=\"" + str(h*0.28) + "\" stroke=\"#A8B6C5\" stroke-width=\"1\"/><line x1=\"14\" y1=\"" + str(h*0.72) + "\" x2=\"" + str(w-14) + "\" y2=\"" + str(h*0.72) + "\" stroke=\"#A8B6C5\" stroke-width=\"1\"/></g>"
 
     def _core_shell_sphere(self, n, c, w, h):
         r = min(w, h) / 2 - 5
