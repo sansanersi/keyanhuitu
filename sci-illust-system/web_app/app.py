@@ -26,6 +26,7 @@ try:
     from .services import (
         CatalogService,
         DocumentService,
+        DrawingApplicationService,
         DrawService,
         ImageLibraryService,
         SearchService,
@@ -38,6 +39,7 @@ except ImportError:
     from services import (
         CatalogService,
         DocumentService,
+        DrawingApplicationService,
         DrawService,
         ImageLibraryService,
         SearchService,
@@ -153,6 +155,7 @@ draw_service = DrawService(
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
     asset_resolver_factory=lambda: AssetResolver(element_library=el, bioicons=bioicons),
 )
+drawing_app_service = DrawingApplicationService(draw_service=draw_service)
 system_service = SystemService(
     database_getter=lambda: db,
     knowledge_base=kb,
@@ -332,7 +335,7 @@ def draw_styles():
 
 @app.route("/api/draw", methods=["POST"])
 def draw():
-    response = draw_service.draw(request.json or {})
+    response = drawing_app_service.generate_figure(request.json or {})
     if not response.get("success") and response.get("error") == "missing_text":
         return jsonify({"success": False, "error": "请输入绘图需求"})
     return jsonify(response)
@@ -340,7 +343,7 @@ def draw():
 
 @app.route("/api/workflow", methods=["POST"])
 def workflow():
-    response = draw_service.workflow(request.json or {})
+    response = drawing_app_service.create_workflow(request.json or {})
     if not response.get("success") and response.get("error") == "missing_text":
         return jsonify({"success": False, "error": "请输入绘图需求"})
     return jsonify(response)

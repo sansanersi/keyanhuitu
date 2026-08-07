@@ -10,6 +10,7 @@ if SYSTEM_DIR not in sys.path:
 
 from web_app.services.text_library_service import TextLibraryService
 from web_app.services.image_library_service import ImageLibraryService
+from web_app.services.drawing_app_service import DrawingApplicationService
 
 
 class FakeCatalog:
@@ -121,6 +122,33 @@ class ImageLibraryRouteTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["boundary"], "image_library")
         self.assertIn("bioicons_status", payload)
+
+
+class FakeDrawService:
+    def workflow(self, payload):
+        return {"success": True, "workflow": {"title": payload["text"]}, "errors": []}
+
+    def draw(self, payload):
+        return {"success": True, "svg": "<svg></svg>", "model_used": payload.get("model", "keyword")}
+
+
+class DrawingApplicationServiceTest(unittest.TestCase):
+    def test_create_workflow_marks_application_boundary(self):
+        service = DrawingApplicationService(draw_service=FakeDrawService())
+
+        result = service.create_workflow({"text": "EGFR 通路"})
+
+        self.assertEqual(result["boundary"], "drawing_application")
+        self.assertEqual(result["workflow"]["title"], "EGFR 通路")
+
+    def test_generate_figure_marks_application_boundary(self):
+        service = DrawingApplicationService(draw_service=FakeDrawService())
+
+        result = service.generate_figure({"text": "EGFR 通路", "model": "qwen2.5:3b"})
+
+        self.assertEqual(result["boundary"], "drawing_application")
+        self.assertIn("<svg", result["svg"])
+        self.assertEqual(result["model_used"], "qwen2.5:3b")
 
 
 if __name__ == "__main__":
