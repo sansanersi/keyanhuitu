@@ -1067,11 +1067,9 @@ to { opacity: 1; transform: translateY(0) scale(1); }
     </div>
     <nav>
       <button class="nav-item active" data-page="dashboard" type="button">仪表盘</button>
-      <button class="nav-item" data-page="entries" type="button">知识条目</button>
-      <button class="nav-item" data-page="draw" type="button">科研绘图</button>
-      <button class="nav-item" data-page="documents" type="button">文档管理</button>
-      <button class="nav-item" data-page="search" type="button">知识检索</button>
-      <button class="nav-item" data-page="elements" type="button">元素库</button>
+      <button class="nav-item" data-page="textLibrary" type="button">文本库</button>
+      <button class="nav-item" data-page="imageLibrary" type="button">图片库</button>
+      <button class="nav-item" data-page="drawingApp" type="button">应用平台</button>
       <button class="nav-item" data-page="settings" type="button">设置</button>
     </nav>
   </aside>
@@ -1304,21 +1302,24 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 var lastSvg = "";
 var pageTitles = {
   dashboard: "仪表盘",
-  entries: "知识条目",
-  draw: "科研绘图",
-  documents: "文档管理",
-  search: "知识检索",
-  elements: "元素库",
+  textLibrary: "文本库",
+  imageLibrary: "图片库",
+  drawingApp: "应用平台",
   settings: "设置"
 };
 var pageSubtitles = {
   dashboard: "专精领域、文本语料、图片素材与 SVG 组合",
-  entries: "管理领域术语，不扩散到无关主题",
-  draw: "把需求转成可编辑科研配图",
-  documents: "把论文、图注和实验描述沉淀为语料",
-  search: "检索当前领域的结构化知识",
-  elements: "推荐可直接用于绘图的图元与素材",
+  textLibrary: "论文、图注、术语、文档和 RAG 检索",
+  imageLibrary: "图片素材、Bioicons、可绘制图元和元素匹配",
+  drawingApp: "需求输入、AI 绘图流程、生成图和导出",
   settings: "本地模型和素材源配置"
+};
+var pageGroups = {
+  dashboard: ["dashboard"],
+  textLibrary: ["entries", "documents", "search"],
+  imageLibrary: ["elements"],
+  drawingApp: ["draw"],
+  settings: ["settings"]
 };
 var revealObserver = null;
 var enhanceTimer = null;
@@ -1457,21 +1458,31 @@ function badge(domain) {
 }
 
 function switchPage(name) {
+  var activePages = pageGroups[name] || [name];
   document.querySelectorAll(".page").forEach(function(page) {
     page.classList.remove("active");
   });
   document.querySelectorAll(".nav-item").forEach(function(item) {
     item.classList.toggle("active", item.dataset.page === name);
   });
-  $("page-" + name).classList.add("active");
+  activePages.forEach(function(pageName) {
+    var page = $("page-" + pageName);
+    if (page) page.classList.add("active");
+  });
   $("page-title").textContent = pageTitles[name] || "";
   $("page-subtitle").textContent = pageSubtitles[name] || pageSubtitles.dashboard;
   if (name === "dashboard") loadDashboard();
-  if (name === "entries") loadEntries();
-  if (name === "documents") loadDocuments();
-  if (name === "search") loadSearchStatus();
+  if (name === "textLibrary") {
+    loadEntries();
+    loadDocuments();
+    loadSearchStatus();
+  }
+  if (name === "drawingApp") loadModels();
   if (name === "settings") loadSettings();
-  scheduleEnhance($("page-" + name));
+  activePages.forEach(function(pageName) {
+    var page = $("page-" + pageName);
+    if (page) scheduleEnhance(page);
+  });
 }
 
 function openEditModal(id) {
@@ -1527,9 +1538,9 @@ function loadDashboard() {
     html += "<div class=\"hero-title\">" + escapeHtml(domainLabel(data.focus_domain)) + " 需求到图的组合引擎</div>";
     html += "<div class=\"hero-copy\">把客户的自然语言需求拆成文本语料、结构化元素和可绘制素材，再交给布局和渲染器输出 SVG。系统当前只聚焦一个领域，避免知识面发散。</div>";
     html += "<div class=\"hero-actions\">";
-    html += "<button class=\"btn-primary hero-action\" type=\"button\" onclick=\"switchPage('draw')\">开始绘图</button>";
-    html += "<button class=\"btn hero-action\" type=\"button\" onclick=\"switchPage('elements')\">查看素材</button>";
-    html += "<button class=\"btn hero-action\" type=\"button\" onclick=\"switchPage('documents')\">导入语料</button>";
+    html += "<button class=\"btn-primary hero-action\" type=\"button\" onclick=\"switchPage('drawingApp')\">开始绘图</button>";
+    html += "<button class=\"btn hero-action\" type=\"button\" onclick=\"switchPage('imageLibrary')\">查看素材</button>";
+    html += "<button class=\"btn hero-action\" type=\"button\" onclick=\"switchPage('textLibrary')\">导入语料</button>";
     html += "</div>";
     html += "</div>";
     html += "<div class=\"tag-list\">";
