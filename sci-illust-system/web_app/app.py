@@ -23,11 +23,27 @@ from flask import Flask, jsonify, render_template, request
 try:
     from .database import KnowledgeDatabase
     from .document_processor import DocumentProcessor
-    from .services import CatalogService, DocumentService, DrawService, SearchService, SystemService, TextLibraryService
+    from .services import (
+        CatalogService,
+        DocumentService,
+        DrawService,
+        ImageLibraryService,
+        SearchService,
+        SystemService,
+        TextLibraryService,
+    )
 except ImportError:
     from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
-    from services import CatalogService, DocumentService, DrawService, SearchService, SystemService, TextLibraryService
+    from services import (
+        CatalogService,
+        DocumentService,
+        DrawService,
+        ImageLibraryService,
+        SearchService,
+        SystemService,
+        TextLibraryService,
+    )
 
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
@@ -131,6 +147,7 @@ text_library_service = TextLibraryService(
     document_service=document_service,
     search_service=search_service,
 )
+image_library_service = ImageLibraryService(catalog_service=catalog_service)
 draw_service = DrawService(
     knowledge_base=kb,
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
@@ -168,6 +185,18 @@ def dashboard():
 @app.route("/api/text-library/dashboard")
 def text_library_dashboard():
     return jsonify(text_library_service.dashboard())
+
+
+@app.route("/api/image-library/dashboard")
+def image_library_dashboard():
+    return jsonify(image_library_service.dashboard())
+
+
+@app.route("/api/image-library/suggest")
+def image_library_suggest():
+    query = request.args.get("q", request.args.get("text", ""))
+    top_k = int(request.args.get("top_k", 8))
+    return jsonify(image_library_service.suggest_assets(query, top_k=top_k))
 
 
 @app.route("/api/entries")
