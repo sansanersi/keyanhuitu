@@ -109,3 +109,56 @@ sci-illust-system/
 | 元素完整性 | 40% | 需求元素覆盖率 |
 | 布局合理性 | 35% | 重叠/对齐/间距 |
 | 可编辑性 | 25% | SVG标注/分组/颜色 |
+
+## 平台拆分后的本地检查
+
+当前系统仍然是一个 Flask 单体应用，但页面和服务边界已经按三个方向拆分：
+
+| 边界 | 职责 | 关键服务 |
+|------|------|----------|
+| 文本库 | 论文、图注、术语、RAG 和文档处理 | `TextLibraryService` |
+| 图片库 | 本地图元、Bioicons、图片素材和后续图数据库关系 | `ImageLibraryService` |
+| 应用平台 | 绘图需求、AI 绘图流程、生成图和导出 | `DrawingApplicationService` |
+
+数据层目标是一个 MySQL 实例承载三个逻辑库：
+
+```text
+text_db   -> 文本库
+image_db  -> 图片库
+app_db    -> 应用平台
+```
+
+现阶段只是完成配置抽象，不会自动连接 MySQL，也不会迁移真实数据；本地运行仍兼容当前 SQLite 运行库。
+
+### 本地启动
+
+```powershell
+.\start.bat
+```
+
+如果需要手动启动 Flask：
+
+```powershell
+$repo = "D:\ljn-xm\keyanhuitu"
+$env:PYTHONPATH = "$repo\sci-illust-system\web_app;$repo\sci-illust-system;$repo"
+$env:SCI_WEB_MODE = "stable"
+python sci-illust-system\web_app\app.py
+```
+
+### 核心接口检查
+
+```powershell
+Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:5000/" -TimeoutSec 10 | Select-Object StatusCode
+Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:5000/api/dashboard" -TimeoutSec 10 | Select-Object StatusCode
+Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:5000/api/text-library/dashboard" -TimeoutSec 10 | Select-Object StatusCode
+Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:5000/api/image-library/dashboard" -TimeoutSec 10 | Select-Object StatusCode
+Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:5000/api/draw/models" -TimeoutSec 10 | Select-Object StatusCode
+```
+
+### 回归测试
+
+```powershell
+$env:BIOICONS_ROOT = Join-Path $env:TEMP "codex-empty-bioicons-root"
+New-Item -ItemType Directory -Force -Path $env:BIOICONS_ROOT | Out-Null
+python -m unittest discover -s tests -p "test_*.py" -v
+```
