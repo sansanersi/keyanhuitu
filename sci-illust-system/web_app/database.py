@@ -13,6 +13,22 @@ def _default_db_path():
     return os.path.join(os.path.dirname(__file__), "data", "knowledge.db")
 
 
+def logical_database_config():
+    """读取未来 MySQL 三逻辑库配置；当前阶段只做配置抽象，不建立连接。"""
+
+    return {
+        "host": os.environ.get("SCI_MYSQL_HOST", "127.0.0.1"),
+        "port": int(os.environ.get("SCI_MYSQL_PORT", "3306")),
+        "user": os.environ.get("SCI_MYSQL_USER", "root"),
+        "password": os.environ.get("SCI_MYSQL_PASSWORD", ""),
+        "schemas": {
+            "text": os.environ.get("SCI_TEXT_DB_NAME", "text_db"),
+            "image": os.environ.get("SCI_IMAGE_DB_NAME", "image_db"),
+            "app": os.environ.get("SCI_APP_DB_NAME", "app_db"),
+        },
+    }
+
+
 DB_PATH = _default_db_path()
 
 class KnowledgeDatabase:

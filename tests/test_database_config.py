@@ -30,6 +30,26 @@ class DatabaseConfigTest(unittest.TestCase):
                 finally:
                     importlib.reload(database_module)
 
+    def test_logical_database_config_uses_three_mysql_schemas(self):
+        config_env = {
+            "SCI_MYSQL_HOST": "127.0.0.1",
+            "SCI_MYSQL_PORT": "3307",
+            "SCI_MYSQL_USER": "sci_user",
+            "SCI_MYSQL_PASSWORD": "secret",
+            "SCI_TEXT_DB_NAME": "text_db",
+            "SCI_IMAGE_DB_NAME": "image_db",
+            "SCI_APP_DB_NAME": "app_db",
+        }
+
+        with patch.dict(os.environ, config_env, clear=False):
+            config = database_module.logical_database_config()
+
+        self.assertEqual(config["host"], "127.0.0.1")
+        self.assertEqual(config["port"], 3307)
+        self.assertEqual(config["user"], "sci_user")
+        self.assertEqual(config["password"], "secret")
+        self.assertEqual(config["schemas"], {"text": "text_db", "image": "image_db", "app": "app_db"})
+
 
 if __name__ == "__main__":
     unittest.main()
