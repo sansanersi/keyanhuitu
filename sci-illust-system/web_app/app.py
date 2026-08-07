@@ -23,11 +23,11 @@ from flask import Flask, jsonify, render_template, request
 try:
     from .database import KnowledgeDatabase
     from .document_processor import DocumentProcessor
-    from .services import CatalogService, DocumentService, DrawService, SearchService, SystemService
+    from .services import CatalogService, DocumentService, DrawService, SearchService, SystemService, TextLibraryService
 except ImportError:
     from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
-    from services import CatalogService, DocumentService, DrawService, SearchService, SystemService
+    from services import CatalogService, DocumentService, DrawService, SearchService, SystemService, TextLibraryService
 
 from knowledge_base.bioicons_library import BioiconsLibrary
 from knowledge_base.element_library import ElementLibrary
@@ -126,6 +126,11 @@ def _web_mode():
 document_service = DocumentService(lambda: db, lambda: dp, lambda: text_kb, FOCUS_DOMAIN)
 search_service = SearchService(kb, text_kb, FOCUS_DOMAIN)
 catalog_service = CatalogService(lambda: db, lambda: kb, lambda: el, lambda: bioicons, FOCUS_DOMAIN)
+text_library_service = TextLibraryService(
+    catalog_service=catalog_service,
+    document_service=document_service,
+    search_service=search_service,
+)
 draw_service = DrawService(
     knowledge_base=kb,
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),
@@ -158,6 +163,11 @@ def favicon():
 @app.route("/api/dashboard")
 def dashboard():
     return jsonify(system_service.dashboard())
+
+
+@app.route("/api/text-library/dashboard")
+def text_library_dashboard():
+    return jsonify(text_library_service.dashboard())
 
 
 @app.route("/api/entries")
