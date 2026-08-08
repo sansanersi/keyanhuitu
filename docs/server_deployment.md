@@ -78,6 +78,7 @@ Copy-Item .env.server.example .env
 |------|------|
 | `SCI_WEB_HOST` | 服务器监听地址，内网测试可用 `0.0.0.0` |
 | `SCI_WEB_PORT` | Web 端口，默认 `5000` |
+| `SCI_REPOSITORY_KIND` | 当前保持 `sqlite`；真实 MySQL Repository 完成后再切换 |
 | `SCI_WEBAPP_DB_PATH` | SQLite 运行库路径，必须纳入备份 |
 | `OLLAMA_BASE_URL` | Ollama 服务地址 |
 | `OLLAMA_DEFAULT_MODEL` | 当前建议 `qwen2.5:0.5b` 先轻量跑通 |

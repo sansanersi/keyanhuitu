@@ -43,6 +43,7 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 
 - MySQL 三逻辑库名称来自 `.env.server.example` / 环境变量。
 - 可生成 MySQL 初始化 SQL。
+- 已增加 Repository 抽象层，当前默认实现为 `SQLiteKnowledgeRepository`。
 - 自动化测试覆盖三库、核心表和脚本输出。
 - 现有 SQLite 运行逻辑保持兼容，不会破坏当前系统。
 
@@ -55,7 +56,7 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 
 ## 下一阶段
 
-建议下一阶段做 Repository 抽象：
+下一阶段建议继续实现 MySQL Repository：
 
 ```text
 现有服务层
@@ -65,4 +66,4 @@ Repository 接口
 SQLiteRepository / MySQLRepository
 ```
 
-这样可以先让测试继续跑 SQLite，再逐步把服务器环境切换到 MySQL。
+现在 `SQLiteKnowledgeRepository` 已经可用；下一步要增加 `MySQLKnowledgeRepository`，并通过环境变量控制服务器环境切换。

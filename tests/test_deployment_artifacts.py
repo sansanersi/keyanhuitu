@@ -16,6 +16,7 @@ class DeploymentArtifactsTest(unittest.TestCase):
 
         self.assertIn("SCI_WEB_HOST=0.0.0.0", content)
         self.assertIn("SCI_WEB_PORT=5000", content)
+        self.assertIn("SCI_REPOSITORY_KIND=sqlite", content)
         self.assertIn("SCI_WEBAPP_DB_PATH=", content)
         self.assertIn("SCI_TEXT_DB_NAME=text_db", content)
         self.assertIn("SCI_IMAGE_DB_NAME=image_db", content)

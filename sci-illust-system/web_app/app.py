@@ -21,8 +21,8 @@ _configure_import_paths()
 from flask import Flask, jsonify, render_template, request
 
 try:
-    from .database import KnowledgeDatabase
     from .document_processor import DocumentProcessor
+    from .repositories import build_repository
     from .services import (
         CatalogService,
         DocumentService,
@@ -34,8 +34,8 @@ try:
         TextLibraryService,
     )
 except ImportError:
-    from database import KnowledgeDatabase
     from document_processor import DocumentProcessor
+    from repositories import build_repository
     from services import (
         CatalogService,
         DocumentService,
@@ -73,7 +73,7 @@ def _build_runtime_state():
     return {
         "kb": knowledge_base,
         "el": ElementLibrary(knowledge_base.vocabulary),
-        "db": KnowledgeDatabase(),
+        "db": build_repository(),
         "dp": DocumentProcessor(),
         "text_kb": GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN),
         "bioicons": BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main")),
