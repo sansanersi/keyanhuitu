@@ -63,10 +63,22 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --dry-run
 ```
 
+服务器联调建议先跑离线检查：
+
+```powershell
+python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --offline
+```
+
 确认 MySQL schema 已创建、`.env` 配置正确、已备份 SQLite 后，再执行：
 
 ```powershell
 python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --apply
+```
+
+如果要在一个脚本里完成连接检查、建表、迁移和健康检查：
+
+```powershell
+python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --check-connection --apply-schema --apply-migration --health-base-url http://127.0.0.1:5000
 ```
 
 切换服务器 Repository：

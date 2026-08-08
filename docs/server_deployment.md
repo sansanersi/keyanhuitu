@@ -70,6 +70,12 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --dry-run
 ```
 
+也可以先跑服务器联调离线检查：
+
+```powershell
+python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --offline
+```
+
 确认备份、schema 和 `.env` 配置后再执行：
 
 ```powershell
