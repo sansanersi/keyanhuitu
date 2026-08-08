@@ -147,7 +147,9 @@ python sci-illust-system\web_app\app.py
 
 ### 服务器部署前检查
 
-部署到服务器前先看 [docs/server_deployment.md](docs/server_deployment.md)。当前建议先作为内测/演示版部署，确认 RAG、文档处理、图片库、绘图流程和 Ollama 小模型链路稳定后，再迁移 MySQL、图数据库、对象存储、登录权限和监控备份。
+部署到服务器前先看 [docs/server_deployment.md](docs/server_deployment.md)。当前按服务器版 v1 推进，先确认 RAG、文档处理、图片库、绘图流程和 Ollama 小模型链路稳定，再逐步迁移 MySQL、图数据库、对象存储、登录权限和监控备份。
+
+服务器版数据层说明见 [docs/server_data_layer.md](docs/server_data_layer.md)。
 
 服务器启动脚本：
 

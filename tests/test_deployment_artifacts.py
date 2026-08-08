@@ -45,11 +45,21 @@ class DeploymentArtifactsTest(unittest.TestCase):
     def test_deployment_document_names_current_limitations(self):
         content = read_text("docs/server_deployment.md")
 
-        self.assertIn("内测/演示版", content)
+        self.assertIn("服务器版 v1", content)
         self.assertIn("MySQL", content)
         self.assertIn("SQLite", content)
         self.assertIn("Ollama", content)
         self.assertIn("health_check.ps1", content)
+        self.assertIn("server_data_layer.md", content)
+        self.assertIn("generate_mysql_schema.py", content)
+
+    def test_server_data_layer_document_links_schema_generator(self):
+        content = read_text("docs/server_data_layer.md")
+
+        self.assertIn("text_db", content)
+        self.assertIn("image_db", content)
+        self.assertIn("app_db", content)
+        self.assertIn("generate_mysql_schema.py", content)
 
 
 if __name__ == "__main__":
