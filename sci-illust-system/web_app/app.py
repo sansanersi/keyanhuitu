@@ -367,9 +367,18 @@ def query_llm():
         return jsonify({"response": f"调用失败: {exc}", "source": "error"})
 
 
+def _web_host():
+    return os.environ.get("SCI_WEB_HOST", "127.0.0.1").strip() or "127.0.0.1"
+
+
+def _web_port():
+    value = os.environ.get("SCI_WEB_PORT", "5000").strip() or "5000"
+    return int(value)
+
+
 def run_web_app():
-    host = "127.0.0.1"
-    port = 5000
+    host = _web_host()
+    port = _web_port()
     mode = _web_mode()
     print(f"Web service: http://{host}:{port} (mode={mode})")
 

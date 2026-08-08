@@ -3,6 +3,11 @@ __pycache__/
 
 *.log
 
+.env
+.env.*
+!.env.example
+!.env.server.example
+
 dashboard-check.png
 
 # Web App 运行时数据库

@@ -145,6 +145,22 @@ $env:SCI_WEB_MODE = "stable"
 python sci-illust-system\web_app\app.py
 ```
 
+### 服务器部署前检查
+
+部署到服务器前先看 [docs/server_deployment.md](docs/server_deployment.md)。当前建议先作为内测/演示版部署，确认 RAG、文档处理、图片库、绘图流程和 Ollama 小模型链路稳定后，再迁移 MySQL、图数据库、对象存储、登录权限和监控备份。
+
+服务器启动脚本：
+
+```powershell
+.\scripts\start_server.ps1 -HostAddress 0.0.0.0 -Port 5000
+```
+
+健康检查脚本：
+
+```powershell
+.\scripts\health_check.ps1 -BaseUrl http://127.0.0.1:5000 -OllamaUrl http://127.0.0.1:11434
+```
+
 ### 核心接口检查
 
 ```powershell
