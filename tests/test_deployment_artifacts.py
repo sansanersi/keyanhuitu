@@ -55,6 +55,7 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("generate_mysql_schema.py", content)
         self.assertIn("migrate_sqlite_to_mysql.py", content)
         self.assertIn("mysql_server_readiness.py", content)
+        self.assertIn("mysql_server_readiness.ps1", content)
 
     def test_server_data_layer_document_links_schema_generator(self):
         content = read_text("docs/server_data_layer.md")
@@ -65,6 +66,16 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("generate_mysql_schema.py", content)
         self.assertIn("migrate_sqlite_to_mysql.py", content)
         self.assertIn("mysql_server_readiness.py", content)
+        self.assertIn("mysql_server_readiness.ps1", content)
+
+    def test_mysql_readiness_wrapper_forwards_key_flags(self):
+        content = read_text("scripts/mysql_server_readiness.ps1")
+
+        self.assertIn("mysql_server_readiness.py", content)
+        self.assertIn("--offline", content)
+        self.assertIn("--check-connection", content)
+        self.assertIn("--apply-schema", content)
+        self.assertIn("--apply-migration", content)
 
 
 if __name__ == "__main__":

@@ -76,6 +76,12 @@ python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/
 python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --offline
 ```
 
+或者直接用 PowerShell 包装脚本：
+
+```powershell
+.\scripts\mysql_server_readiness.ps1 -Offline
+```
+
 确认备份、schema 和 `.env` 配置后再执行：
 
 ```powershell

@@ -69,6 +69,12 @@ python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/
 python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --offline
 ```
 
+如果你想在 Windows 上直接一键调用，可以用：
+
+```powershell
+.\scripts\mysql_server_readiness.ps1 -Offline
+```
+
 确认 MySQL schema 已创建、`.env` 配置正确、已备份 SQLite 后，再执行：
 
 ```powershell
@@ -79,6 +85,12 @@ python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/
 
 ```powershell
 python scripts/mysql_server_readiness.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --schema-output build/mysql_schema.sql --check-connection --apply-schema --apply-migration --health-base-url http://127.0.0.1:5000
+```
+
+对应的 PowerShell 包装入口：
+
+```powershell
+.\scripts\mysql_server_readiness.ps1 -CheckConnection -ApplySchema -ApplyMigration -HealthBaseUrl http://127.0.0.1:5000
 ```
 
 切换服务器 Repository：
