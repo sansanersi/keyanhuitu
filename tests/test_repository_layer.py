@@ -50,23 +50,116 @@ class RepositoryLayerTest(unittest.TestCase):
             self.assertIsInstance(repository, SQLiteKnowledgeRepository)
             self.assertTrue(os.path.exists(db_path))
 
-    def test_repository_factory_rejects_unsupported_repository_kind(self):
+    def test_repository_factory_requires_mysql_driver_when_no_connector_is_injected(self):
+        from web_app.repositories import build_repository
+
+        with self.assertRaises(RuntimeError) as context:
+            build_repository(kind="mysql")
+
+        self.assertIn("requires PyMySQL", str(context.exception))
+
+    def test_repository_factory_reads_repository_kind_from_env(self):
+        from web_app.repositories import MySQLKnowledgeRepository, build_repository
+
+        connection = FakeMySQLConnection()
+        with patch.dict(os.environ, {"SCI_REPOSITORY_KIND": "mysql"}, clear=False):
+            repository = build_repository(connector=lambda **kwargs: connection)
+
+        self.assertIsInstance(repository, MySQLKnowledgeRepository)
+
+    def test_mysql_repository_uses_three_schema_tables(self):
+        from web_app.repositories import MySQLKnowledgeRepository
+
+        connection = FakeMySQLConnection()
+        repository = MySQLKnowledgeRepository(
+            config={
+                "host": "127.0.0.1",
+                "port": 3306,
+                "user": "sci",
+                "password": "",
+                "schemas": {"text": "text_db", "image": "image_db", "app": "app_db"},
+            },
+            connector=lambda **kwargs: connection,
+        )
+
+        connection.queue_scalar(0)
+        self.assertTrue(repository.add_entry(name="EGFR", english="EGFR", domain="biology"))
+        repository.save_document(filename="paper.txt", filepath="/tmp/paper.txt", file_type="txt", content="EGFR", vectorized=1)
+        repository.set_setting("ollama_default_model", "qwen2.5:0.5b")
+
+        executed_sql = "\n".join(connection.executed_sql)
+        self.assertIn("INSERT INTO `text_db`.`terms`", executed_sql)
+        self.assertIn("INSERT INTO `text_db`.`documents`", executed_sql)
+        self.assertIn("INSERT INTO `app_db`.`model_configs`", executed_sql)
+
+    def test_repository_factory_can_create_mysql_repository_from_env(self):
+        from web_app.repositories import MySQLKnowledgeRepository, build_repository
+
+        connection = FakeMySQLConnection()
+        env = {
+            "SCI_REPOSITORY_KIND": "mysql",
+            "SCI_TEXT_DB_NAME": "prod_text",
+            "SCI_IMAGE_DB_NAME": "prod_image",
+            "SCI_APP_DB_NAME": "prod_app",
+        }
+
+        with patch.dict(os.environ, env, clear=False):
+            repository = build_repository(connector=lambda **kwargs: connection)
+
+        self.assertIsInstance(repository, MySQLKnowledgeRepository)
+        self.assertEqual(repository.schemas["text"], "prod_text")
+
+    def test_repository_factory_rejects_unknown_repository_kind(self):
         from web_app.repositories import build_repository
 
         with self.assertRaises(ValueError) as context:
-            build_repository(kind="mysql")
+            build_repository(kind="postgres")
 
-        self.assertIn("Unsupported repository kind", str(context.exception))
-
-    def test_repository_factory_reads_repository_kind_from_env(self):
-        from web_app.repositories import build_repository
-
-        with patch.dict(os.environ, {"SCI_REPOSITORY_KIND": "mysql"}, clear=False):
-            with self.assertRaises(ValueError) as context:
-                build_repository()
-
-        self.assertIn("Unsupported repository kind: mysql", str(context.exception))
+        self.assertIn("Unsupported repository kind: postgres", str(context.exception))
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FakeMySQLConnection:
+    def __init__(self):
+        self.executed_sql = []
+        self.scalar_queue = []
+        self.lastrowid = 1
+
+    def cursor(self):
+        return FakeMySQLCursor(self)
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+    def queue_scalar(self, value):
+        self.scalar_queue.append(value)
+
+
+class FakeMySQLCursor:
+    def __init__(self, connection):
+        self.connection = connection
+        self.lastrowid = connection.lastrowid
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+    def execute(self, sql, params=None):
+        self.connection.executed_sql.append(sql)
+        self.lastrowid = self.connection.lastrowid
+
+    def fetchone(self):
+        if self.connection.scalar_queue:
+            return {"COUNT(*)": self.connection.scalar_queue.pop(0)}
+        return None
+
+    def fetchall(self):
+        return []

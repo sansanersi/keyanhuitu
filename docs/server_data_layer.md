@@ -44,19 +44,40 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 - MySQL 三逻辑库名称来自 `.env.server.example` / 环境变量。
 - 可生成 MySQL 初始化 SQL。
 - 已增加 Repository 抽象层，当前默认实现为 `SQLiteKnowledgeRepository`。
+- 已增加 `MySQLKnowledgeRepository`，可通过 `SCI_REPOSITORY_KIND=mysql` 切换。
+- 已增加 SQLite 到 MySQL 的迁移脚本，默认 dry-run，不会误写服务器。
 - 自动化测试覆盖三库、核心表和脚本输出。
 - 现有 SQLite 运行逻辑保持兼容，不会破坏当前系统。
 
 未完成：
 
-- SQLite 数据导出到 MySQL。
-- Web 服务实际切换到 MySQL Repository。
+- 真实 MySQL 服务器联调。
 - 文档切块向量库同步。
 - 图片文件对象存储和图数据库同步。
 
+## SQLite 到 MySQL 迁移
+
+先执行 dry-run，看当前 SQLite 运行库里有多少数据：
+
+```powershell
+python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --dry-run
+```
+
+确认 MySQL schema 已创建、`.env` 配置正确、已备份 SQLite 后，再执行：
+
+```powershell
+python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --apply
+```
+
+切换服务器 Repository：
+
+```powershell
+$env:SCI_REPOSITORY_KIND = "mysql"
+```
+
 ## 下一阶段
 
-下一阶段建议继续实现 MySQL Repository：
+当前数据访问路径：
 
 ```text
 现有服务层
@@ -66,4 +87,4 @@ Repository 接口
 SQLiteRepository / MySQLRepository
 ```
 
-现在 `SQLiteKnowledgeRepository` 已经可用；下一步要增加 `MySQLKnowledgeRepository`，并通过环境变量控制服务器环境切换。
+下一阶段重点是接入真实 MySQL 实例做联调，并把图片资产、向量库和图数据库的数据同步补齐。

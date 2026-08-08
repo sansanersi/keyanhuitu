@@ -62,7 +62,19 @@ MySQL(text_db, image_db, app_db) + 向量库 + 图数据库 + 对象存储
 python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 ```
 
-然后在 MySQL 服务器执行生成的 SQL。当前 Web 服务仍兼容 SQLite；真正切换 MySQL 读写前，还需要做 Repository 抽象和数据迁移脚本。
+然后在 MySQL 服务器执行生成的 SQL。当前 Web 服务仍默认使用 SQLite；切换 MySQL 前需要先完成真实 MySQL 联调和数据备份。
+
+迁移前先 dry-run：
+
+```powershell
+python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --dry-run
+```
+
+确认备份、schema 和 `.env` 配置后再执行：
+
+```powershell
+python scripts/migrate_sqlite_to_mysql.py --sqlite-db sci-illust-system/web_app/data/knowledge.db --apply
+```
 
 ## 环境变量
 
@@ -78,7 +90,7 @@ Copy-Item .env.server.example .env
 |------|------|
 | `SCI_WEB_HOST` | 服务器监听地址，内网测试可用 `0.0.0.0` |
 | `SCI_WEB_PORT` | Web 端口，默认 `5000` |
-| `SCI_REPOSITORY_KIND` | 当前保持 `sqlite`；真实 MySQL Repository 完成后再切换 |
+| `SCI_REPOSITORY_KIND` | 默认 `sqlite`；真实 MySQL 联调通过后可切为 `mysql` |
 | `SCI_WEBAPP_DB_PATH` | SQLite 运行库路径，必须纳入备份 |
 | `OLLAMA_BASE_URL` | Ollama 服务地址 |
 | `OLLAMA_DEFAULT_MODEL` | 当前建议 `qwen2.5:0.5b` 先轻量跑通 |

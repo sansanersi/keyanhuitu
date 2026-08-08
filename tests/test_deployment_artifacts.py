@@ -53,6 +53,7 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("health_check.ps1", content)
         self.assertIn("server_data_layer.md", content)
         self.assertIn("generate_mysql_schema.py", content)
+        self.assertIn("migrate_sqlite_to_mysql.py", content)
 
     def test_server_data_layer_document_links_schema_generator(self):
         content = read_text("docs/server_data_layer.md")
@@ -61,6 +62,7 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("image_db", content)
         self.assertIn("app_db", content)
         self.assertIn("generate_mysql_schema.py", content)
+        self.assertIn("migrate_sqlite_to_mysql.py", content)
 
 
 if __name__ == "__main__":
