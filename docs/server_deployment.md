@@ -107,6 +107,7 @@ Copy-Item .env.server.example .env
 | `OLLAMA_BASE_URL` | Ollama 服务地址 |
 | `OLLAMA_DEFAULT_MODEL` | 当前建议 `qwen2.5:0.5b` 先轻量跑通 |
 | `BIOICONS_ROOT` | Bioicons 或本地图元目录 |
+| `SCI_IMAGE_ASSET_ROOT` | 图片库本地资产目录，必须纳入备份 |
 
 ## 启动方式
 

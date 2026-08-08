@@ -23,6 +23,7 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("SCI_APP_DB_NAME=app_db", content)
         self.assertIn("OLLAMA_DEFAULT_MODEL=qwen2.5:0.5b", content)
         self.assertIn("BIOICONS_ROOT=", content)
+        self.assertIn("SCI_IMAGE_ASSET_ROOT=", content)
 
     def test_start_server_script_sets_required_env_vars(self):
         content = read_text("scripts/start_server.ps1")

@@ -89,7 +89,11 @@ class FakeImageCatalog:
 
 class ImageLibraryServiceTest(unittest.TestCase):
     def test_dashboard_reports_image_boundary_and_sources(self):
-        service = ImageLibraryService(catalog_service=FakeImageCatalog())
+        service = ImageLibraryService(
+            catalog_service=FakeImageCatalog(),
+            asset_storage=FakeAssetStorage(),
+            graph_repository=FakeImageGraph(),
+        )
 
         result = service.dashboard()
 
@@ -97,6 +101,8 @@ class ImageLibraryServiceTest(unittest.TestCase):
         self.assertEqual(result["bioicons_status"]["count"], 2804)
         self.assertIn("local_files", result["sources"])
         self.assertIn("image_graph", result["sources"])
+        self.assertEqual(result["asset_storage"]["root_dir"], "D:/assets")
+        self.assertEqual(result["image_graph"]["relations"], 3)
 
     def test_suggest_assets_merges_elements_and_bioicons(self):
         service = ImageLibraryService(catalog_service=FakeImageCatalog())
@@ -122,6 +128,16 @@ class ImageLibraryRouteTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["boundary"], "image_library")
         self.assertIn("bioicons_status", payload)
+
+
+class FakeAssetStorage:
+    def stats(self):
+        return {"root_dir": "D:/assets", "assets": 12}
+
+
+class FakeImageGraph:
+    def stats(self):
+        return {"relations": 3}
 
 
 class FakeDrawService:

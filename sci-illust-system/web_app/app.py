@@ -22,6 +22,7 @@ from flask import Flask, jsonify, render_template, request
 
 try:
     from .document_processor import DocumentProcessor
+    from .image_assets import InMemoryImageGraphRepository, LocalImageAssetStorage
     from .repositories import build_repository
     from .services import (
         CatalogService,
@@ -35,6 +36,7 @@ try:
     )
 except ImportError:
     from document_processor import DocumentProcessor
+    from image_assets import InMemoryImageGraphRepository, LocalImageAssetStorage
     from repositories import build_repository
     from services import (
         CatalogService,
@@ -77,6 +79,10 @@ def _build_runtime_state():
         "dp": DocumentProcessor(),
         "text_kb": GraphRAGTextKBManager(focus_domain=FOCUS_DOMAIN),
         "bioicons": BioiconsLibrary(os.environ.get("BIOICONS_ROOT", r"E:\AI\bioicons-main")),
+        "image_storage": LocalImageAssetStorage(
+            os.environ.get("SCI_IMAGE_ASSET_ROOT", os.path.join(BASE_DIR, "data", "image_assets"))
+        ),
+        "image_graph": InMemoryImageGraphRepository(),
     }
 
 
@@ -87,6 +93,8 @@ db = RUNTIME["db"]
 dp = RUNTIME["dp"]
 text_kb = RUNTIME["text_kb"]
 bioicons = RUNTIME["bioicons"]
+image_storage = RUNTIME["image_storage"]
+image_graph = RUNTIME["image_graph"]
 
 
 def _import_builtin_entries():
@@ -149,7 +157,11 @@ text_library_service = TextLibraryService(
     document_service=document_service,
     search_service=search_service,
 )
-image_library_service = ImageLibraryService(catalog_service=catalog_service)
+image_library_service = ImageLibraryService(
+    catalog_service=catalog_service,
+    asset_storage=image_storage,
+    graph_repository=image_graph,
+)
 draw_service = DrawService(
     knowledge_base=kb,
     pipeline_factory=lambda: __import__("orchestrator.pipeline", fromlist=["SciIllustPipeline"]).SciIllustPipeline(),

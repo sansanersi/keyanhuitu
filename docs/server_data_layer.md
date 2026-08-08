@@ -55,6 +55,21 @@ python scripts/generate_mysql_schema.py --output build/mysql_schema.sql
 - 文档切块向量库同步。
 - 图片文件对象存储和图数据库同步。
 
+## 图片资产层
+
+服务器版 v1 先使用本地文件目录承载图片资产，环境变量为：
+
+```powershell
+$env:SCI_IMAGE_ASSET_ROOT = "D:\sci-illust-runtime\image-assets"
+```
+
+当前已提供：
+
+- `LocalImageAssetStorage`：保存本地图片/SVG 文件，返回 hash、路径、大小和分类元数据。
+- `InMemoryImageGraphRepository`：记录图元关系的开发/测试实现。
+
+下一步可以把这两个边界替换为 MinIO/OSS 和 Neo4j，而不改图片库服务层。
+
 ## SQLite 到 MySQL 迁移
 
 先执行 dry-run，看当前 SQLite 运行库里有多少数据：
