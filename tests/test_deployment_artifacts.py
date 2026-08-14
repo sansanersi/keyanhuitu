@@ -78,6 +78,91 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("--apply-schema", content)
         self.assertIn("--apply-migration", content)
 
+    def test_web_settings_ui_uses_model_service_wording(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn("模型服务记忆", content)
+        self.assertIn("模型服务地址", content)
+        self.assertIn("保存模型服务设置", content)
+        self.assertIn("模型服务状态", content)
+        self.assertNotIn(">Ollama 记忆<", content)
+        self.assertNotIn(">Ollama 地址<", content)
+        self.assertNotIn("保存 Ollama 设置", content)
+        self.assertNotIn("Ollama 状态", content)
+
+
+    def test_web_ui_uses_same_origin_api_when_served_over_http(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn('if (isHttp) return url;', content)
+        self.assertIn('return "http://127.0.0.1:5000" + url;', content)
+        self.assertNotIn('var isAppServer = isHttp', content)
+
+    def test_nginx_template_sets_proxy_timeouts_for_model_requests(self):
+        content = read_text("build/keyanhuitu.nginx.conf")
+
+        self.assertIn("proxy_connect_timeout", content)
+        self.assertIn("proxy_send_timeout", content)
+        self.assertIn("proxy_read_timeout", content)
+
+    def test_web_ui_uses_isolated_top_level_pages(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn("function switchPage(name)", content)
+        self.assertIn('.page.active {', content)
+        self.assertIn('item.addEventListener("click", function() { switchPage(item.dataset.page); });', content)
+        self.assertIn("onclick=\\\"switchPage('drawingApp')\\\"", content)
+        self.assertNotIn("function initAnchorNavigation()", content)
+        self.assertNotIn("function jumpToPage(name)", content)
+        self.assertNotIn('href="#page-dashboard"', content)
+
+    def test_drawing_app_panels_are_not_sticky_fixed(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn(".draw-layout {", content)
+        self.assertNotIn(".draw-panel .card {\n  position: sticky;", content)
+        self.assertNotIn(".preview {\n  display: flex;\n  flex-direction: column;\n  min-height: 650px;\n  position: sticky;", content)
+
+    def test_drawing_app_ui_surfaces_generation_source_labels(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn("function sourceLabel(source)", content)
+        self.assertIn("来源：", content)
+        self.assertIn("模型生成", content)
+        self.assertIn("规则生成", content)
+
+    def test_sidebar_uses_floating_island_shell(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn("grid-template-columns: minmax(220px, 272px) 1fr;", content)
+        self.assertIn("padding: 22px 0 22px 18px;", content)
+        self.assertIn("width: min(100%, 248px);", content)
+        self.assertIn("backdrop-filter: blur(20px);", content)
+        self.assertIn("border-radius: 24px;", content)
+        self.assertIn("top: 18px;", content)
+        self.assertIn("left: 0;", content)
+        self.assertIn(".sidebar nav {", content)
+        self.assertIn("padding: 0 12px 12px;", content)
+        self.assertIn("box-shadow: 0 24px 54px rgba(2, 8, 20, .42);", content)
+        self.assertIn("overflow: visible;", content)
+        self.assertIn("margin-bottom: 0;", content)
+
+    def test_web_ui_uses_light_workbench_shell(self):
+        content = read_text("sci-illust-system/web_app/templates/index.html")
+
+        self.assertIn('class="app workbench-shell"', content)
+        self.assertIn('class="sidebar workbench-sidebar"', content)
+        self.assertIn('class="topbar workbench-topbar"', content)
+        self.assertIn('class="draw-layout creator-workbench"', content)
+        self.assertIn('class="card draw-panel creator-sidebar"', content)
+        self.assertIn('class="card preview creator-canvas"', content)
+        self.assertIn("--surface-page: #f6f8f4;", content)
+        self.assertIn("--accent-soft: #e4f4e8;", content)
+        self.assertIn("生成模式", content)
+        self.assertIn("图片描述", content)
+        self.assertIn("图片分辨率", content)
+        self.assertIn("图片生成数量", content)
+
 
 if __name__ == "__main__":
     unittest.main()

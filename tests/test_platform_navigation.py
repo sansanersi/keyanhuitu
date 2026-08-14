@@ -27,6 +27,13 @@ class PlatformNavigationTest(unittest.TestCase):
         self.assertIn("AI 绘图流程", self.template)
         self.assertIn("导出", self.template)
 
+    def test_generation_area_uses_creator_copy(self):
+        self.assertIn(">应用平台<", self.template)
+        self.assertIn("准备好开始创作了吗？", self.template)
+        self.assertIn("生成图片", self.template)
+        self.assertIn("多轮编辑", self.template)
+        self.assertIn("风格多样", self.template)
+
 
 if __name__ == "__main__":
     unittest.main()
