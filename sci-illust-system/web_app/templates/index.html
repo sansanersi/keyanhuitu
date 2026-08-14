@@ -6,6 +6,18 @@
 <title>科研绘图工作台</title>
 <style>
 :root {
+  --surface-page: #f6f8f4;
+  --surface-panel: #ffffff;
+  --surface-muted: #f2f5ef;
+  --surface-muted-strong: #edf3e8;
+  --border-soft: #d8e3d4;
+  --border-strong: #c7d4c1;
+  --text-strong: #1e2a1f;
+  --text-soft: #415044;
+  --text-muted-soft: #68756a;
+  --accent: #56b36d;
+  --accent-strong: #2d8e47;
+  --accent-soft: #e4f4e8;
   --bg: #07111f;
   --bg-elevated: #0a1628;
   --panel: #0d182a;
@@ -31,11 +43,8 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", sans-serif;
-  color: var(--text);
-  background:
-    radial-gradient(circle at top left, rgba(88, 213, 255, .12), transparent 28%),
-    radial-gradient(circle at 85% 0, rgba(63, 134, 255, .16), transparent 24%),
-    linear-gradient(180deg, #091224 0, var(--bg) 46vh, #050b15 100%);
+  color: var(--text-strong);
+  background: var(--surface-page);
   animation: appFadeIn .6s var(--ease-out) both;
 }
 button, input, select, textarea { font: inherit; }
@@ -55,37 +64,65 @@ button {
 }
 button:disabled { cursor: not-allowed; opacity: .65; }
 button:active { transform: translateY(1px) scale(.985); }
-.app {
+.app,
+.workbench-shell {
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 264px 1fr;
   min-height: 100vh;
 }
-.sidebar {
+.sidebar,
+.workbench-sidebar {
   position: sticky;
   top: 0;
-  height: 100vh;
-  background:
-    linear-gradient(180deg, #0d1830 0%, #101827 54%, #0a111e 100%);
-  color: #fff;
-  padding: 24px 16px;
-  box-shadow: inset -1px 0 rgba(255,255,255,.05), 18px 0 50px rgba(0,0,0,.14);
+  align-self: stretch;
+  width: 100%;
+  min-height: 100vh;
+  max-height: none;
+  background: var(--surface-panel);
+  color: var(--text-strong);
+  margin-left: 0;
+  padding: 18px 14px;
+  border: 0;
+  border-right: 1px solid var(--border-soft);
+  border-radius: 0;
+  backdrop-filter: none;
+  box-shadow: none;
+  overflow: hidden;
   animation: sidebarSlideIn .7s var(--ease-out) both;
 }
+.sidebar::before,
+.workbench-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(246,248,244,0) 24%);
+  pointer-events: none;
+}
+.sidebar nav,
+.workbench-sidebar nav {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+}
 .brand {
-  padding: 0 8px 24px;
-  border-bottom: 1px solid rgba(255,255,255,.12);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+  padding: 4px 4px 18px;
+  border-bottom: 1px solid var(--border-soft);
   margin-bottom: 18px;
   animation: slideUp .58s var(--ease-out) both;
 }
 .brand h1 {
   margin: 0 0 6px;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.3;
   letter-spacing: 0;
 }
 .brand p {
   margin: 0;
-  color: #92a7c5;
+  color: var(--text-muted-soft);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -94,37 +131,41 @@ button:active { transform: translateY(1px) scale(.985); }
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 44px;
-  padding: 11px 12px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  color: #b6c7df;
+  min-height: 48px;
+  padding: 12px 14px;
+  margin-bottom: 0;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--text-soft);
   background: transparent;
   text-align: left;
   font-weight: 600;
   isolation: isolate;
   transform-origin: left center;
+  text-decoration: none;
 }
 .nav-item::before {
   content: "";
   position: absolute;
-  inset: 7px auto 7px 8px;
-  width: 3px;
+  inset: 8px auto 8px 8px;
+  width: 4px;
   border-radius: 999px;
-  background: #79b7ff;
+  background: var(--accent);
   opacity: 0;
   transform: scaleY(.35);
   transition: opacity .22s var(--ease-out), transform .22s var(--ease-out);
 }
 .nav-item:hover {
-  background: rgba(255,255,255,.07);
-  color: #ffffff;
+  background: var(--surface-muted);
+  border-color: var(--border-soft);
+  color: var(--text-strong);
   transform: translateX(3px);
 }
 .nav-item.active {
-  background: linear-gradient(135deg, #2d69e0, #143f8d);
-  color: #fff;
-  box-shadow: 0 14px 32px rgba(19, 60, 136, .42);
+  background: var(--accent-soft);
+  border-color: #a6d8b1;
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(86, 179, 109, .1);
 }
 .nav-item.active::before {
   opacity: 1;
@@ -132,18 +173,22 @@ button:active { transform: translateY(1px) scale(.985); }
 }
 .main {
   min-width: 0;
-  padding: 22px 24px 24px;
+  padding: 0 24px 24px;
 }
 .workspace {
-  max-width: 1580px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
-.topbar {
+.topbar,
+.workbench-topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  min-height: 56px;
+  padding: 14px 0 16px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border-soft);
   animation: slideUp .62s .08s var(--ease-out) both;
 }
 .topbar-copy {
@@ -153,12 +198,12 @@ button:active { transform: translateY(1px) scale(.985); }
 }
 .topbar h2 {
   margin: 0;
-  font-size: 25px;
+  font-size: 24px;
   line-height: 1.15;
   letter-spacing: 0;
 }
 .topbar-subtitle {
-  color: var(--muted);
+  color: var(--text-muted-soft);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -167,12 +212,12 @@ button:active { transform: translateY(1px) scale(.985); }
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-soft);
   border-radius: 999px;
-  background: rgba(13, 24, 42, .92);
-  color: var(--muted);
+  background: var(--surface-panel);
+  color: var(--text-muted-soft);
   font-size: 13px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 6px 14px rgba(34, 53, 36, .06);
 }
 .dot {
   width: 8px;
@@ -196,11 +241,11 @@ button:active { transform: translateY(1px) scale(.985); }
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 .card {
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 24px rgba(36, 54, 38, .05);
   transform: translateZ(0);
   transition:
     transform .28s var(--ease-out),
@@ -210,8 +255,8 @@ button:active { transform: translateY(1px) scale(.985); }
 }
 .card:hover {
   transform: translateY(-4px) scale(1.004);
-  border-color: rgba(122, 178, 255, .26);
-  box-shadow: 0 24px 60px rgba(2, 8, 20, .56);
+  border-color: var(--border-strong);
+  box-shadow: 0 18px 32px rgba(36, 54, 38, .08);
 }
 .card.compact { padding: 16px; }
 .card.surface {
@@ -500,10 +545,10 @@ button:active { transform: translateY(1px) scale(.985); }
   width: 100%;
   min-height: 40px;
   padding: 9px 11px;
-  border: 1px solid #2a3a54;
+  border: 1px solid var(--border-soft);
   border-radius: 6px;
-  background: #0b1627;
-  color: var(--text);
+  background: var(--surface-panel);
+  color: var(--text-strong);
   outline: none;
   transition:
     border-color .2s var(--ease-out),
@@ -512,28 +557,28 @@ button:active { transform: translateY(1px) scale(.985); }
     background .2s var(--ease-out);
 }
 .field:focus {
-  border-color: rgba(122,178,255,.8);
-  box-shadow: 0 0 0 3px rgba(63,134,255,.16);
+  border-color: rgba(86,179,109,.8);
+  box-shadow: 0 0 0 3px rgba(86,179,109,.16);
   transform: translateY(-1px);
-  background: #0d1b31;
+  background: #fff;
 }
 .toolbar .field { max-width: 260px; }
 .btn {
   min-height: 38px;
   padding: 8px 14px;
-  background: #10233e;
-  color: #dceaff;
-  border: 1px solid rgba(122,178,255,.15);
+  background: var(--surface-panel);
+  color: var(--text-soft);
+  border: 1px solid var(--border-soft);
 }
 .btn:hover {
-  background: #153257;
+  background: var(--surface-muted);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(2, 8, 20, .38);
+  box-shadow: 0 10px 22px rgba(36, 54, 38, .08);
 }
 .btn-primary {
-  background: linear-gradient(135deg, #3d8bff, #2157d6);
+  background: linear-gradient(135deg, #7ac68a, #56b36d);
   color: #fff;
-  box-shadow: 0 10px 24px rgba(49, 117, 255, .28);
+  box-shadow: 0 10px 24px rgba(86, 179, 109, .22);
 }
 .btn-primary::after {
   content: "";
@@ -544,9 +589,9 @@ button:active { transform: translateY(1px) scale(.985); }
   transition: transform .62s var(--ease-out);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #59a0ff, #1d4ed8);
+  background: linear-gradient(135deg, #8bd199, #4ca864);
   transform: translateY(-1px);
-  box-shadow: 0 16px 34px rgba(49, 117, 255, .34);
+  box-shadow: 0 16px 34px rgba(86, 179, 109, .28);
 }
 .btn-primary:hover::after { transform: translateX(130%); }
 .btn-danger {
@@ -769,24 +814,117 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
   gap: 18px;
   min-height: calc(100vh - 130px);
 }
+.creator-workbench {
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - 120px);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface-panel);
+}
 .draw-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.draw-panel .card {
-  position: sticky;
-  top: 24px;
+.creator-sidebar {
+  gap: 18px;
+  padding: 18px;
+  border: 0;
+  border-right: 1px solid var(--border-soft);
+  border-radius: 0;
+  background: #fbfcf9;
+  box-shadow: none;
 }
 .draw-panel textarea {
   min-height: 190px;
   resize: vertical;
   line-height: 1.6;
 }
+.creator-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.creator-mode-button {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 12px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-panel);
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.creator-mode-button.is-active {
+  color: #215c2e;
+  background: var(--accent-soft);
+  border-color: #8dd09a;
+}
+.creator-option-group {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8eee5;
+}
+.creator-option-group:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.creator-option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.creator-counter {
+  color: var(--text-muted-soft);
+  font-size: 12px;
+}
+.creator-segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.creator-segmented.quad {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.creator-pill {
+  min-height: 40px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface-panel);
+  color: var(--text-soft);
+}
+.creator-pill.is-active {
+  background: var(--accent-soft);
+  border-color: #8dd09a;
+  color: #215c2e;
+}
+.creator-advanced {
+  border-top: 1px solid #e8eee5;
+  padding-top: 14px;
+}
+.creator-advanced summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--text-strong);
+  font-weight: 600;
+}
+.creator-advanced summary::-webkit-details-marker {
+  display: none;
+}
+.creator-advanced-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
 .form-label {
   display: block;
   margin: 0 0 6px;
-  color: #c7d4e8;
+  color: var(--text-soft);
   font-size: 13px;
   font-weight: 600;
 }
@@ -798,7 +936,13 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
 .preview {
   display: flex;
   flex-direction: column;
-  min-height: 650px;
+  min-height: 0;
+}
+.creator-canvas {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface-panel);
 }
 .preview-head {
   display: flex;
@@ -809,9 +953,11 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
   border-bottom: 1px solid var(--line);
 }
 .preview-body {
-  flex: 1;
+  flex: 1 1 auto;
   display: grid;
   place-items: center;
+  min-height: 420px;
+  max-height: min(68vh, 760px);
   padding: 22px;
   overflow: auto;
   background:
@@ -823,10 +969,73 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
   border: 1px solid rgba(34, 52, 79, .9);
   transition: border-color .24s var(--ease-out), box-shadow .24s var(--ease-out), background-position .8s var(--ease-out);
 }
+.creator-canvas .preview-body {
+  min-height: 520px;
+  max-height: none;
+  background: #f8faf7;
+  border: 1px solid #edf1ea;
+}
 .preview:hover .preview-body {
   border-color: rgba(122,178,255,.24);
   box-shadow: inset 0 0 0 1px rgba(122,178,255,.1);
   background-position: 0 8px, 8px 0;
+}
+.creator-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  min-height: 460px;
+  padding: 48px 32px;
+  text-align: center;
+}
+.creator-empty-icon {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a34cf4, #ff4ca1);
+  color: #fff;
+  font-size: 30px;
+}
+.creator-empty-title {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-strong);
+}
+.creator-empty-copy {
+  max-width: 620px;
+  color: var(--text-muted-soft);
+  line-height: 1.7;
+}
+.creator-highlights {
+  width: min(100%, 640px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.creator-highlight {
+  padding: 14px 12px;
+  border: 1px solid #e6ede2;
+  border-radius: 14px;
+  background: #fff;
+}
+.creator-highlight strong {
+  display: block;
+  margin-bottom: 6px;
+}
+.creator-tips {
+  width: min(100%, 640px);
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #f2f4ef;
+  color: var(--text-soft);
+  text-align: left;
+}
+.creator-tips strong {
+  display: block;
+  margin-bottom: 8px;
 }
 .preview-body .empty {
   display: grid;
@@ -852,12 +1061,18 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.creator-result-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 .workflow-preview {
   margin-top: 14px;
   padding: 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: rgba(10, 20, 36, .72);
+  background: #f7faf5;
 }
 .workflow-preview-head {
   display: flex;
@@ -878,19 +1093,19 @@ tbody tr:hover { background: rgba(122, 178, 255, .06); }
 .workflow-preview-card {
   min-height: 82px;
   padding: 12px;
-  border: 1px solid rgba(122,178,255,.12);
+  border: 1px solid #e6ede2;
   border-radius: 8px;
-  background: rgba(255, 255, 255, .035);
+  background: #fff;
 }
 .workflow-preview-card strong {
   display: block;
   margin-bottom: 8px;
-  color: var(--ink);
+  color: var(--text-strong);
   font-size: 13px;
 }
 .workflow-preview-card span,
 .workflow-preview-card li {
-  color: var(--muted);
+  color: var(--text-muted-soft);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -1035,8 +1250,13 @@ to { opacity: 1; transform: translateY(0) scale(1); }
   .sidebar {
     position: sticky;
     top: 0;
+    left: auto;
     z-index: 10;
+    width: 100%;
+    max-height: none;
+    margin-left: 0;
     padding: 14px;
+    border-radius: 18px;
   }
   .brand { padding-bottom: 12px; margin-bottom: 10px; }
   .sidebar nav { display: flex; overflow-x: auto; gap: 8px; }
@@ -1049,6 +1269,7 @@ to { opacity: 1; transform: translateY(0) scale(1); }
   .search-layout { grid-template-columns: 1fr; }
   .workflow-grid { grid-template-columns: 1fr 1fr; }
   .analysis, .form-row, .workflow-preview-body { grid-template-columns: 1fr; }
+  .preview-body { max-height: none; }
 }
 @media (max-width: 560px) {
   .workflow-grid { grid-template-columns: 1fr; }
@@ -1059,8 +1280,8 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
+<div class="app workbench-shell">
+  <aside class="sidebar workbench-sidebar">
     <div class="brand">
       <h1>科研绘图工作台</h1>
       <p>专精领域文本库、图像素材库与 SVG 组合输出</p>
@@ -1076,7 +1297,7 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 
   <main class="main">
     <div class="workspace">
-      <div class="topbar">
+      <div class="topbar workbench-topbar">
         <div class="topbar-copy">
           <h2 id="page-title">仪表盘</h2>
           <div class="topbar-subtitle" id="page-subtitle">专精领域科研绘图工作台</div>
@@ -1111,16 +1332,61 @@ to { opacity: 1; transform: translateY(0) scale(1); }
       </section>
 
       <section id="page-draw" class="page">
-        <div class="draw-layout">
-          <div class="draw-panel">
-            <div class="card">
+        <div class="draw-layout creator-workbench">
+          <div class="card draw-panel creator-sidebar">
+            <div class="creator-option-group">
               <div class="section-title">
-                <h3>绘图需求</h3>
-                <span class="badge">SVG 输出</span>
+                <h3>生成模式</h3>
               </div>
-              <label class="form-label" for="draw-input">需求描述</label>
-              <textarea class="field" id="draw-input" placeholder="例如：EGF 配体结合 EGFR 受体，激活 RAS 激酶，并将信号传递到细胞核。"></textarea>
-              <div class="form-row">
+              <div class="creator-mode-grid">
+                <button class="creator-mode-button is-active" data-creator-mode="text" type="button">
+                  <span>文生图</span>
+                </button>
+                <button class="creator-mode-button" data-creator-mode="sketch" type="button">
+                  <span>草图转图像</span>
+                </button>
+                <button class="creator-mode-button" data-creator-mode="edit" type="button">
+                  <span>编辑图片</span>
+                </button>
+              </div>
+            </div>
+            <div class="creator-option-group">
+              <div class="creator-option-head">
+                <label class="form-label" for="draw-input">图片描述</label>
+                <span class="creator-counter">0 / 2000</span>
+              </div>
+              <textarea class="field" id="draw-input" placeholder="例如：一张展示 Cell 分裂过程的示意图，包括 DNA 复制和染色体分离的关键步骤。"></textarea>
+            </div>
+            <div class="creator-option-group">
+              <label class="form-label" for="draw-language-select">图片文字语言</label>
+              <select class="field" id="draw-language-select">
+                <option value="zh-CN">简体中文（默认）</option>
+              </select>
+            </div>
+            <div class="creator-option-group">
+              <label class="form-label" for="draw-size-select">图片分辨率</label>
+              <div class="creator-segmented">
+                <button class="creator-pill is-active" type="button">2K</button>
+                <button class="creator-pill" type="button">4K</button>
+              </div>
+              <select class="field" id="draw-size-select" style="margin-top:10px">
+                <option value="900x600">900 x 600</option>
+                <option value="1200x800">1200 x 800</option>
+                <option value="600x400">600 x 400</option>
+              </select>
+            </div>
+            <div class="creator-option-group">
+              <label class="form-label">图片生成数量</label>
+              <div class="creator-segmented quad">
+                <button class="creator-pill" type="button">1</button>
+                <button class="creator-pill" type="button">2</button>
+                <button class="creator-pill is-active" type="button">3</button>
+                <button class="creator-pill" type="button">4</button>
+              </div>
+            </div>
+            <details class="creator-advanced" open>
+              <summary>高级选项</summary>
+              <div class="creator-advanced-body">
                 <div>
                   <label class="form-label" for="draw-layout-select">布局</label>
                   <select class="field" id="draw-layout-select">
@@ -1140,16 +1406,6 @@ to { opacity: 1; transform: translateY(0) scale(1); }
                     <option value="minimal">极简风格</option>
                   </select>
                 </div>
-              </div>
-              <div class="form-row">
-                <div>
-                  <label class="form-label" for="draw-size-select">画布</label>
-                  <select class="field" id="draw-size-select">
-                    <option value="900x600">900 x 600</option>
-                    <option value="1200x800">1200 x 800</option>
-                    <option value="600x400">600 x 400</option>
-                  </select>
-                </div>
                 <div>
                   <label class="form-label" for="draw-model-select">模型</label>
                   <select class="field" id="draw-model-select">
@@ -1157,16 +1413,16 @@ to { opacity: 1; transform: translateY(0) scale(1); }
                   </select>
                 </div>
               </div>
-              <div class="toolbar" style="margin:12px 0 0">
-                <button class="btn-primary" type="button" id="draw-submit">生成配图</button>
-                <button class="btn" type="button" id="workflow-submit">生成流程</button>
-                <button class="btn" type="button" id="draw-example">填入示例</button>
-              </div>
+            </details>
+            <div class="toolbar" style="margin:12px 0 0">
+              <button class="btn-primary" type="button" id="draw-submit">生成图片</button>
+              <button class="btn" type="button" id="workflow-submit">生成流程</button>
+              <button class="btn" type="button" id="draw-example">填入示例</button>
             </div>
           </div>
 
-          <div class="card preview">
-            <div class="preview-head">
+          <div class="card preview creator-canvas">
+            <div class="preview-head creator-canvas-head">
               <div>
                 <h3 style="margin:0 0 4px">生成预览</h3>
                 <div class="muted" id="draw-summary">等待输入绘图需求</div>
@@ -1174,9 +1430,33 @@ to { opacity: 1; transform: translateY(0) scale(1); }
               <button class="btn" type="button" id="download-svg" disabled>下载 SVG</button>
             </div>
             <div class="preview-body" id="svg-preview">
-              <div class="empty"><strong>等待生成</strong><span>输入一段科研图需求后，系统会在这里显示可编辑 SVG 预览。</span></div>
+              <div class="creator-empty-state">
+                <div class="creator-empty-icon">✦</div>
+                <h3 class="creator-empty-title">准备好开始创作了吗？</h3>
+                <div class="creator-empty-copy">选择模板、风格和宽高比，输入您的创意描述，即可生成专业的科研插图。</div>
+                <div class="creator-highlights">
+                  <div class="creator-highlight">
+                    <strong>AI 生成</strong>
+                    <span>根据描述快速生成高质量插图</span>
+                  </div>
+                  <div class="creator-highlight">
+                    <strong>多轮编辑</strong>
+                    <span>支持持续编辑和持续改进</span>
+                  </div>
+                  <div class="creator-highlight">
+                    <strong>风格多样</strong>
+                    <span>多种模板和风格，满足不同需求</span>
+                  </div>
+                </div>
+                <div class="creator-tips">
+                  <strong>提示</strong>
+                  <div>详细的描述能带来更好的生成效果。</div>
+                  <div>生成后，你可以通过对话进行多轮编辑。</div>
+                  <div>建议先生成流程，再生成最终配图。</div>
+                </div>
+              </div>
             </div>
-            <div class="analysis">
+            <div class="creator-result-grid">
               <div>
                 <div class="form-label">识别元素</div>
                 <div class="tag-list" id="draw-elements"><span class="muted">暂无</span></div>
@@ -1267,12 +1547,12 @@ to { opacity: 1; transform: translateY(0) scale(1); }
       <section id="page-settings" class="page">
         <div class="card surface">
         <div class="section-title">
-          <h3>Ollama 记忆</h3>
-          <span class="muted">本地服务地址与默认模型</span>
+          <h3>模型服务记忆</h3>
+          <span class="muted">服务地址与默认模型</span>
         </div>
         <div class="form-row">
           <div>
-            <label class="form-label" for="ollama-url">Ollama 地址</label>
+            <label class="form-label" for="ollama-url">模型服务地址</label>
             <input class="field" id="ollama-url" placeholder="http://127.0.0.1:11434">
           </div>
           <div>
@@ -1280,8 +1560,12 @@ to { opacity: 1; transform: translateY(0) scale(1); }
             <input class="field" id="ollama-model" placeholder="qwen3.5:4b">
           </div>
         </div>
+        <div style="margin-top:10px">
+          <label class="form-label" for="ollama-api-key">API Key（可选）</label>
+          <input class="field" id="ollama-api-key" type="password" placeholder="留空则保持现有凭据">
+        </div>
         <div class="toolbar" style="margin:12px 0 0">
-          <button class="btn-primary" type="button" id="ollama-save-btn">保存 Ollama 设置</button>
+          <button class="btn-primary" type="button" id="ollama-save-btn">保存模型服务设置</button>
           <span class="muted" id="ollama-status-text">尚未加载</span>
         </div>
         </div>
@@ -1312,7 +1596,7 @@ var pageSubtitles = {
   textLibrary: "论文、图注、术语、文档和 RAG 检索",
   imageLibrary: "图片素材、Bioicons、可绘制图元和元素匹配",
   drawingApp: "需求输入、AI 绘图流程、生成图和导出",
-  settings: "本地模型和素材源配置"
+  settings: "模型服务和素材源配置"
 };
 var pageGroups = {
   dashboard: ["dashboard"],
@@ -1347,8 +1631,8 @@ function toast(message) {
 function apiUrl(url) {
   if (!url || url.indexOf("/api/") !== 0) return url;
   var isHttp = location.protocol === "http:" || location.protocol === "https:";
-  var isAppServer = isHttp && /^(127\.0\.0\.1|localhost)$/.test(location.hostname) && location.port === "5000";
-  return isAppServer ? url : "http://127.0.0.1:5000" + url;
+  if (isHttp) return url;
+  return "http://127.0.0.1:5000" + url;
 }
 
 function request(method, url, body) {
@@ -1453,24 +1737,30 @@ function domainLabel(domain) {
   return map[domain] || domain || "未分类";
 }
 
+function sourceLabel(source) {
+  var map = {
+    ollama: "模型生成",
+    fallback: "模型失败后回退",
+    rule_based: "规则生成",
+    rule_based_analyzer: "规则生成"
+  };
+  return map[source] || "规则生成";
+}
+
 function badge(domain) {
   return "<span class=\"badge " + escapeHtml(domain || "") + "\">" + escapeHtml(domainLabel(domain)) + "</span>";
 }
 
 function switchPage(name) {
   var activePages = pageGroups[name] || [name];
-  document.querySelectorAll(".page").forEach(function(page) {
-    page.classList.remove("active");
-  });
   document.querySelectorAll(".nav-item").forEach(function(item) {
     item.classList.toggle("active", item.dataset.page === name);
   });
-  activePages.forEach(function(pageName) {
-    var page = $("page-" + pageName);
-    if (page) page.classList.add("active");
-  });
-  $("page-title").textContent = pageTitles[name] || "";
+  $("page-title").textContent = pageTitles[name] || pageTitles.dashboard;
   $("page-subtitle").textContent = pageSubtitles[name] || pageSubtitles.dashboard;
+  document.querySelectorAll(".page").forEach(function(page) {
+    page.classList.toggle("active", activePages.indexOf(page.id.replace("page-", "")) !== -1);
+  });
   if (name === "dashboard") loadDashboard();
   if (name === "textLibrary") {
     loadEntries();
@@ -1669,7 +1959,8 @@ function loadOllamaConfig() {
   request("GET", "/api/ollama/config").then(function(data) {
     $("ollama-url").value = data.base_url || "http://127.0.0.1:11434";
     $("ollama-model").value = data.default_model || "";
-    $("ollama-status-text").textContent = "已加载配置";
+    $("ollama-api-key").value = "";
+    $("ollama-status-text").textContent = data.api_key_configured ? "已加载配置，凭据已设置" : "已加载配置";
     if (!$("draw-model-select").value && data.default_model) {
       $("draw-model-select").value = data.default_model;
     }
@@ -1703,8 +1994,9 @@ function renderWorkflow(workflow, errors) {
   var relations = workflow.relations || [];
   var checks = workflow.quality_checks || [];
   var spatialRules = composition.spatial_rules || [];
-  $("workflow-summary").textContent = task.normalized_goal || "已生成结构化绘图流程";
-  $("workflow-version").textContent = "v" + (workflow.schema_version || "1.0");
+  var workflowSource = sourceLabel(workflow.source);
+  $("workflow-summary").textContent = (task.normalized_goal || "已生成结构化绘图流程") + " · 来源：" + workflowSource;
+  $("workflow-version").textContent = "v" + (workflow.schema_version || "1.0") + " · " + workflowSource;
   var html = "";
   html += workflowCard("任务", [
     "领域：" + domainLabel(workflow.domain || "general"),
@@ -1792,7 +2084,7 @@ function generateDrawing() {
   var button = $("draw-submit");
   button.disabled = true;
   button.textContent = "生成中";
-  $("draw-summary").textContent = selectedModel ? "正在调用本地模型生成 SVG，通常需要 30 到 60 秒" : "正在分析需求并生成 SVG";
+  $("draw-summary").textContent = selectedModel ? "正在调用模型服务生成 SVG，通常需要 30 到 60 秒" : "正在分析需求并生成 SVG";
   $("svg-preview").innerHTML = "<div class=\"empty\"><strong>正在生成</strong><span>系统正在检索知识库并组装 SVG，请稍候。</span></div>";
   request("POST", "/api/draw", payload).then(function(data) {
     if (!data.success) throw new Error(data.error || "生成失败");
@@ -1800,7 +2092,7 @@ function generateDrawing() {
     $("svg-preview").innerHTML = lastSvg || "<div class=\"empty\"><strong>暂无结果</strong><span>接口没有返回 SVG。</span></div>";
     $("download-svg").disabled = !lastSvg;
     var analysis = data.analysis || {};
-    $("draw-summary").textContent = "学科：" + domainLabel(analysis.domain) + "；图类型：" + (analysis.figure_type || "示意图") + "；画布：" + (analysis.canvas || "");
+    $("draw-summary").textContent = "来源：" + sourceLabel(data.source || analysis.source) + "；学科：" + domainLabel(analysis.domain) + "；图类型：" + (analysis.figure_type || "示意图") + "；画布：" + (analysis.canvas || "");
     renderTags("draw-elements", data.elements || [], "未识别到元素");
     renderTags("draw-relations", data.relations || [], "暂无关系");
     renderWorkflow(data.workflow, []);
@@ -1815,11 +2107,21 @@ function generateDrawing() {
 }
 
 function saveOllamaConfig() {
-  request("POST", "/api/ollama/config", {
+  var payload = {
     base_url: $("ollama-url").value.trim(),
     default_model: $("ollama-model").value.trim()
+  };
+  var apiKey = $("ollama-api-key").value.trim();
+  if (apiKey) {
+    payload.api_key = apiKey;
+  }
+  request("POST", "/api/ollama/config", {
+    base_url: payload.base_url,
+    default_model: payload.default_model,
+    api_key: payload.api_key
   }).then(function(data) {
     $("ollama-status-text").textContent = data.success ? "配置已保存" : "保存失败";
+    $("ollama-api-key").value = "";
     if (data.default_model) {
       $("draw-model-select").value = data.default_model;
       localStorage.setItem("sci_ollama_model", data.default_model);
@@ -2049,8 +2351,9 @@ function loadSettings() {
     var models = data.models || [];
     var html = "";
     html += "<div class=\"status-grid\">";
-    html += "<div class=\"status-tile\"><div class=\"metric-label\">Ollama 状态</div><div class=\"metric-value\">" + (data.running ? "运行中" : "未运行") + "</div><div class=\"metric-note\">" + escapeHtml(data.base_url || "127.0.0.1:11434") + "</div></div>";
-    html += "<div class=\"status-tile\"><div class=\"metric-label\">本地模型</div><div class=\"metric-value\">" + models.length + "</div><div class=\"metric-note\">" + escapeHtml(models.join(", ") || "暂无模型") + "</div></div>";
+    html += "<div class=\"status-tile\"><div class=\"metric-label\">模型服务状态</div><div class=\"metric-value\">" + (data.running ? "运行中" : "未运行") + "</div><div class=\"metric-note\">" + escapeHtml(data.base_url || "127.0.0.1:11434") + "</div></div>";
+    html += "<div class=\"status-tile\"><div class=\"metric-label\">可用模型</div><div class=\"metric-value\">" + models.length + "</div><div class=\"metric-note\">" + escapeHtml(models.join(", ") || "暂无模型") + "</div></div>";
+    html += "<div class=\"status-tile\"><div class=\"metric-label\">API 凭据</div><div class=\"metric-value\">" + (data.api_key_configured ? "已配置" : "未配置") + "</div><div class=\"metric-note\">兼容 OpenAI 风格接口时使用</div></div>";
     html += "<div class=\"status-tile\"><div class=\"metric-label\">默认模型</div><div class=\"metric-value\">" + escapeHtml(data.default_model || "qwen3.5:4b") + "</div><div class=\"metric-note\">下次绘图会优先使用这个模型</div></div>";
     html += "<div class=\"status-tile\"><div class=\"metric-label\">Web 服务</div><div class=\"metric-value\">运行中</div><div class=\"metric-note\">" + escapeHtml(data.server_label || "Flask Web 服务") + "</div></div>";
     html += "</div>";
@@ -2078,6 +2381,14 @@ $("draw-submit").addEventListener("click", generateDrawing);
 $("workflow-submit").addEventListener("click", generateWorkflow);
 $("draw-example").addEventListener("click", function() {
   $("draw-input").value = "EGF 配体结合 EGFR 受体，激活 RAS 激酶，并将信号传递到细胞核，引发基因转录。";
+});
+document.querySelectorAll("[data-creator-mode]").forEach(function(item) {
+  item.addEventListener("click", function() {
+    document.querySelectorAll("[data-creator-mode]").forEach(function(node) {
+      node.classList.remove("is-active");
+    });
+    item.classList.add("is-active");
+  });
 });
 $("draw-model-select").addEventListener("change", function() {
   var model = this.value.trim();

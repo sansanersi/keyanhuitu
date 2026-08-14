@@ -131,21 +131,17 @@ class DeploymentArtifactsTest(unittest.TestCase):
         self.assertIn("模型生成", content)
         self.assertIn("规则生成", content)
 
-    def test_sidebar_uses_floating_island_shell(self):
+    def test_sidebar_uses_workbench_sidebar_shell(self):
         content = read_text("sci-illust-system/web_app/templates/index.html")
 
-        self.assertIn("grid-template-columns: minmax(220px, 272px) 1fr;", content)
-        self.assertIn("padding: 22px 0 22px 18px;", content)
-        self.assertIn("width: min(100%, 248px);", content)
-        self.assertIn("backdrop-filter: blur(20px);", content)
-        self.assertIn("border-radius: 24px;", content)
-        self.assertIn("top: 18px;", content)
-        self.assertIn("left: 0;", content)
-        self.assertIn(".sidebar nav {", content)
-        self.assertIn("padding: 0 12px 12px;", content)
-        self.assertIn("box-shadow: 0 24px 54px rgba(2, 8, 20, .42);", content)
-        self.assertIn("overflow: visible;", content)
-        self.assertIn("margin-bottom: 0;", content)
+        self.assertIn("grid-template-columns: 264px 1fr;", content)
+        self.assertIn("padding: 18px 14px;", content)
+        self.assertIn("border-right: 1px solid var(--border-soft);", content)
+        self.assertIn("background: var(--surface-panel);", content)
+        self.assertIn("color: var(--text-strong);", content)
+        self.assertIn("gap: 10px;", content)
+        self.assertNotIn("backdrop-filter: blur(20px);", content)
+        self.assertNotIn("border-radius: 24px;", content)
 
     def test_web_ui_uses_light_workbench_shell(self):
         content = read_text("sci-illust-system/web_app/templates/index.html")
