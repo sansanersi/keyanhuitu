@@ -15,3 +15,6 @@ sci-illust-system/web_app/data/knowledge.db
 
 # GraphRAG 本地工作区与索引产物
 sci-illust-system/web_app/data/text_kb/
+
+# Git worktree 隔离目录
+.worktrees/
